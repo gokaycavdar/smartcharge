@@ -7,7 +7,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     <div className="flex h-screen bg-slate-950 text-white">
       {/* Sidebar */}
       <aside className="w-20 lg:w-64 bg-slate-900 border-r border-slate-800 flex flex-col p-4">
-        <div className="font-bold text-purple-400 text-xl mb-8 hidden lg:block px-2">EcoOperator</div>
+        <div className="font-bold text-purple-400 text-xl mb-8 hidden lg:block px-2">SmartCharge</div>
         
         <nav className="space-y-2 flex-1">
           <Link href="/operator" className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl text-purple-300 font-medium hover:bg-slate-800 transition-colors">

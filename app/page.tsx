@@ -89,7 +89,7 @@ export default function AuthLandingPage() {
 							<Rocket className="h-4 w-4" /> Hackathon Prototype
 						</span>
 						<h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">
-							<span className="text-gradient-eco">EcoCharge AI:</span> Smart Charging, Less Carbon.
+							<span className="text-gradient-eco">SmartCharge AI:</span> Smart Charging, Less Carbon.
 						</h1>
 						<p className="mt-5 max-w-2xl text-base text-slate-300">
 							AI destekli yeşil slot önerileri, anlık istasyon içgörüleri ve oyunlaştırılmış ödül sistemiyle elektrikli

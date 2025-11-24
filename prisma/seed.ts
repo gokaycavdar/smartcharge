@@ -17,6 +17,22 @@ async function main() {
   const badgeNight = await prisma.badge.create({
     data: { name: "Gece Kuşu", description: "Gece tarifesinde 5 şarj", icon: "🦉" }
   })
+
+  const badgeEco = await prisma.badge.create({
+    data: { name: "Eco Şampiyonu", description: "Sadece yeşil enerjili istasyonları tercih et", icon: "🌱" }
+  })
+
+  const badgeWeekend = await prisma.badge.create({
+    data: { name: "Hafta Sonu Savaşçısı", description: "Hafta sonu şarj et", icon: "🏖️" }
+  })
+
+  const badgeEarlyBird = await prisma.badge.create({
+    data: { name: "Erken Kalkan", description: "Sabah 06:00 - 09:00 arası şarj et", icon: "🌅" }
+  })
+
+  const badgeLongHauler = await prisma.badge.create({
+    data: { name: "Uzun Yolcu", description: "Şehirlerarası istasyonlarda şarj et", icon: "🛣️" }
+  })
   
   // 3. Firma Hesabı Oluştur (Operator)
   const company = await prisma.user.create({
@@ -35,7 +51,7 @@ async function main() {
       role: "DRIVER",
       coins: 150,
       xp: 500,
-      badges: { connect: [{ id: badgeNight.id }] }
+      badges: { connect: [{ id: badgeNight.id }, { id: badgeEco.id }] }
     }
   })
 

@@ -7,7 +7,7 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
     <div className="flex h-screen bg-slate-900 text-white">
       {/* Sidebar (Yan Menü) */}
       <aside className="w-20 lg:w-64 bg-slate-800 border-r border-slate-700 flex flex-col p-4">
-        <div className="font-bold text-green-400 text-xl mb-8 hidden lg:block">EcoDriver</div>
+        <div className="font-bold text-green-400 text-xl mb-8 hidden lg:block">SmartCharge</div>
         
         <nav className="space-y-2 flex-1">
           <Link href="/driver" className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-xl text-blue-400 font-medium hover:bg-slate-700 transition-colors">

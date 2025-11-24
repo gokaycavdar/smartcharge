@@ -74,7 +74,7 @@ export default function Map({ stations, onSelect, initialCenter, zoom = 12 }: Ma
                 pathOptions={{ 
                   fillColor: statusColor, 
                   color: statusColor, 
-                  fillOpacity: 0.3, 
+                  fillOpacity: 0.6, 
                   weight: 0 
                 }}
                 radius={500}

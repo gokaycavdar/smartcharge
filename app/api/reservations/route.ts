@@ -15,7 +15,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Geçersiz tarih" }, { status: 400 });
     }
 
-    const earnedCoins = isGreen ? 50 : 10;
+    // Check for active campaigns to apply bonus coins
+    const campaigns = await prisma.campaign.findMany({
+      where: {
+        status: "ACTIVE",
+        endDate: { gte: new Date() },
+        OR: [
+          { stationId: stationId },
+          { stationId: null }
+        ]
+      },
+      orderBy: { createdAt: "desc" }
+    });
+
+    const activeCampaign = campaigns[0];
+
+    let earnedCoins = isGreen ? 50 : 10;
+    if (activeCampaign?.coinReward) {
+      earnedCoins += activeCampaign.coinReward;
+    }
+
     const co2SavedDelta = isGreen ? 2.5 : 0.5;
 
     const [reservation, user] = await prisma.$transaction([

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { BatteryCharging, Leaf, Loader2, Zap, X, PartyPopper } from "lucide-react";
+import { BatteryCharging, Leaf, Loader2, Zap, X, PartyPopper, Megaphone } from "lucide-react";
 import type { StationMarker } from "@/components/Map";
 
 const Map = dynamic(async () => (await import("@/components/Map")).default, { ssr: false });
@@ -16,6 +16,10 @@ type Slot = {
   price: number;
   status: string;
   load: number;
+  campaignApplied?: {
+    title: string;
+    discount: string;
+  } | null;
 };
 
 type ToastState = {
@@ -169,6 +173,27 @@ export default function DriverDashboard() {
     return `${selectedStation.name}`;
   }, [selectedStation]);
 
+  const recommendation = useMemo(() => {
+    if (!selectedStation || !stations.length) return null;
+    
+    // If current station is not busy (GREEN), no need for recommendation
+    if (selectedStation.mockStatus === "GREEN") return null;
+
+    // Find nearby stations (simple distance check) that are GREEN
+    // Since we don't have complex geo-lib, we'll just check lat/lng diff
+    const nearbyGreenStations = stations.filter(s => 
+      s.id !== selectedStation.id && 
+      s.mockStatus === "GREEN" &&
+      Math.abs(s.lat - selectedStation.lat) < 0.1 && // Roughly nearby
+      Math.abs(s.lng - selectedStation.lng) < 0.1
+    );
+
+    if (nearbyGreenStations.length === 0) return null;
+
+    // Pick the one with lowest load
+    return nearbyGreenStations.sort((a, b) => (a.mockLoad || 100) - (b.mockLoad || 100))[0];
+  }, [selectedStation, stations]);
+
   return (
     <div className="relative min-h-screen bg-slate-900">
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-blue-900/40" />
@@ -198,65 +223,105 @@ export default function DriverDashboard() {
               </button>
             </div>
 
-            <div className="max-h-[60vh] overflow-y-auto px-6 py-6">
-              {isLoadingSlots ? (
-                <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-300">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                  <p>Slotlar yükleniyor...</p>
-                </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {slots.map((slot) => {
-                    const style = slot.isGreen
-                      ? "border-green-400/80 bg-gradient-to-br from-green-500/15 to-emerald-600/10 hover:from-green-500/25 hover:to-emerald-600/20 focus-visible:outline-green-400"
-                      : "border-slate-700/80 bg-slate-800/60 hover:border-slate-500 focus-visible:outline-slate-400";
-                    return (
-                      <button
-                        key={slot.hour}
-                        className={`group relative flex flex-col gap-2 rounded-2xl border px-4 py-4 text-left transition duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-0 ${style}`}
-                        disabled={isBooking}
-                        onClick={() => handleBooking(slot)}
-                        type="button"
-                      >
-                        {slot.isGreen ? (
-                          <span className="absolute -top-3 right-4 rounded-full bg-green-500/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-black shadow-md">
-                            Eco
-                          </span>
-                        ) : null}
+            <div className="flex flex-col lg:flex-row h-full overflow-hidden">
+              <div className="flex-1 max-h-[60vh] overflow-y-auto px-6 py-6">
+                {isLoadingSlots ? (
+                  <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-300">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <p>Slotlar yükleniyor...</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                    {slots.map((slot) => {
+                      const style = slot.isGreen
+                        ? "border-green-400/80 bg-gradient-to-br from-green-500/15 to-emerald-600/10 hover:from-green-500/25 hover:to-emerald-600/20 focus-visible:outline-green-400"
+                        : "border-slate-700/80 bg-slate-800/60 hover:border-slate-500 focus-visible:outline-slate-400";
+                      return (
+                        <button
+                          key={slot.hour}
+                          className={`group relative flex flex-col gap-2 rounded-2xl border px-4 py-4 text-left transition duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-0 ${style}`}
+                          disabled={isBooking}
+                          onClick={() => handleBooking(slot)}
+                          type="button"
+                        >
+                          {slot.isGreen ? (
+                            <span className="absolute -top-3 right-4 rounded-full bg-green-500/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-black shadow-md">
+                              Eco
+                            </span>
+                          ) : null}
 
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm font-semibold text-slate-200 font-mono">{slot.label}</div>
-                          <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                            <span
-                              className={`inline-block h-2 w-2 rounded-full ${
-                                slot.isGreen ? "bg-green-400 shadow-[0_0_0_3px_rgba(74,222,128,.35)]" : "bg-slate-500"
-                              }`}
-                            />
-                            %{slot.load}
+                          {slot.campaignApplied ? (
+                            <span className="absolute -top-3 left-4 rounded-full bg-purple-500/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-md z-10">
+                              {slot.campaignApplied.discount}
+                            </span>
+                          ) : null}
+
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-semibold text-slate-200 font-mono">{slot.label}</div>
+                            <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                              <span
+                                className={`inline-block h-2 w-2 rounded-full ${
+                                  slot.isGreen ? "bg-green-400 shadow-[0_0_0_3px_rgba(74,222,128,.35)]" : "bg-slate-500"
+                                }`}
+                              />
+                              %{slot.load}
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center justify-between text-xs text-slate-300">
-                          <span className="font-medium text-slate-200">{slot.price.toFixed(2)} ₺</span>
-                          <span
-                            className={`flex items-center gap-1 font-semibold ${
-                              slot.isGreen ? "text-yellow-300" : "text-slate-400"
-                            }`}
-                          >
-                            <BatteryCharging className="h-3 w-3" /> +{slot.coins}
-                          </span>
-                        </div>
+                          <div className="flex items-center justify-between text-xs text-slate-300">
+                            <span className="font-medium text-slate-200">{slot.price.toFixed(2)} ₺</span>
+                            <span
+                              className={`flex items-center gap-1 font-semibold ${
+                                slot.isGreen ? "text-yellow-300" : "text-slate-400"
+                              }`}
+                            >
+                              <BatteryCharging className="h-3 w-3" /> +{slot.coins}
+                            </span>
+                          </div>
 
-                        {slot.isGreen ? (
-                          <p className="flex items-center gap-1 text-[11px] font-medium text-green-400">
-                            <Leaf className="h-3 w-3" /> Düşük yük – ekstra ödül
-                          </p>
-                        ) : (
-                          <p className="text-[11px] text-slate-400">Standart tarife</p>
-                        )}
-                      </button>
-                    );
-                  })}
+                          {slot.campaignApplied ? (
+                            <p className="flex items-center gap-1 text-[11px] font-medium text-purple-400">
+                              <Megaphone className="h-3 w-3" /> {slot.campaignApplied.title}
+                            </p>
+                          ) : slot.isGreen ? (
+                            <p className="flex items-center gap-1 text-[11px] font-medium text-green-400">
+                              <Leaf className="h-3 w-3" /> Düşük yük – ekstra ödül
+                            </p>
+                          ) : (
+                            <p className="text-[11px] text-slate-400">Standart tarife</p>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {recommendation && (
+                <div className="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-900/50 p-6 flex flex-col gap-4">
+                  <div className="flex items-center gap-2 text-yellow-400 text-sm font-semibold">
+                    <Zap className="h-4 w-4" />
+                    Akıllı Öneri
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Seçtiğin istasyon şu an yoğun. Yakınlarda daha sakin bir alternatif var:
+                  </p>
+                  
+                  <div className="rounded-2xl border border-green-500/30 bg-green-500/10 p-4 transition hover:bg-green-500/20 cursor-pointer"
+                       onClick={() => handleStationSelect(recommendation)}>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-green-300 text-sm">{recommendation.name}</h3>
+                      <span className="bg-green-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded">
+                        %{recommendation.mockLoad}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-300 mb-3">
+                      Daha düşük yoğunluk ve bekleme süresi.
+                    </div>
+                    <button className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-semibold transition">
+                      Bu İstasyona Git
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

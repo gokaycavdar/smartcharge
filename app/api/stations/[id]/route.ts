@@ -38,6 +38,28 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: "İstasyon bulunamadı" }, { status: 404 });
   }
 
+  // Fetch active campaigns for this station or global
+  const campaigns = await prisma.campaign.findMany({
+    where: {
+      status: "ACTIVE",
+      endDate: { gte: new Date() },
+      OR: [
+        { stationId: stationId },
+        { stationId: null }
+      ]
+    },
+    orderBy: { createdAt: "desc" }
+  });
+
+  const activeCampaign = campaigns[0]; // Apply the most recent active campaign
+  
+  // Parse discount (e.g. "%20" -> 0.20)
+  let campaignDiscountRate = 0;
+  if (activeCampaign && activeCampaign.discount.includes("%")) {
+    const val = parseInt(activeCampaign.discount.replace(/\D/g, ""), 10);
+    if (!isNaN(val)) campaignDiscountRate = val / 100;
+  }
+
   const today = new Date();
   today.setMinutes(0, 0, 0);
 
@@ -46,19 +68,41 @@ export async function GET(request: Request, { params }: Params) {
     slotDate.setHours(hour, 0, 0, 0);
 
     const green = isGreenHour(hour);
-    const price = Number((station.price * (green ? 0.8 : 1)).toFixed(2));
+    
+    // Base logic
+    let price = station.price;
+    let coins = green ? 50 : 10;
+
+    // Apply Green Hour Discount (20%)
+    if (green) {
+      price = price * 0.8;
+    }
+
+    // Apply Campaign Discount (Stacking)
+    if (campaignDiscountRate > 0) {
+      price = price * (1 - campaignDiscountRate);
+    }
+
+    // Apply Campaign Coin Reward
+    if (activeCampaign?.coinReward) {
+      coins += activeCampaign.coinReward;
+    }
 
     return {
       hour,
       label: `${hour.toString().padStart(2, "0")}:00`,
       startTime: slotDate.toISOString(),
       isGreen: green,
-      coins: green ? 50 : 10,
-      price,
+      coins,
+      price: Number(price.toFixed(2)),
       status: green ? "GREEN" : "RED",
       load: getRandomLoad(green),
+      campaignApplied: activeCampaign ? {
+        title: activeCampaign.title,
+        discount: activeCampaign.discount
+      } : null
     };
   });
 
-  return NextResponse.json({ ...station, slots });
+  return NextResponse.json({ ...station, slots, activeCampaign });
 }
