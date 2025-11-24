@@ -1,0 +1,91 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  role      String   @default("DRIVER") // "DRIVER" | "OPERATOR"
+  
+  // Gamification & Stats
+  coins     Int      @default(0)
+  co2Saved  Float    @default(0.0) // Toplam tasarruf (kg)
+  xp        Int      @default(0)   // Level sistemi için puan
+
+  // İlişkiler
+  reservations Reservation[]
+  stations     Station[]
+  badges       Badge[]       // Kazanılan rozetler
+  campaigns    Campaign[]
+}
+
+model Campaign {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  status      String   @default("DRAFT") // "ACTIVE" | "DRAFT" | "ENDED"
+  target      String
+  discount    String
+  endDate     DateTime?
+  
+  ownerId     Int
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  // İsteğe bağlı: Belirli bir istasyona özel kampanya
+  stationId   Int?
+  station     Station? @relation(fields: [stationId], references: [id])
+  
+  coinReward  Int      @default(0) // Kampanya ile kazanılacak ekstra coin
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Badge {
+  id          Int     @id @default(autoincrement())
+  name        String  // Örn: "Gece Kuşu"
+  description String  // Örn: "Gece 02:00-05:00 arası 3 kez şarj et"
+  icon        String  // Emoji veya icon adı (örn: "🦉")
+  users       User[]
+}
+
+model Station {
+  id          Int      @id @default(autoincrement())
+  name        String
+  lat         Float
+  lng         Float
+  address     String?
+  price       Float    @default(5.0)
+  density     Int      @default(0) // 0-100 arası yoğunluk (0: Boş, 100: Dolu)
+  ownerId     Int?
+  
+  owner       User?    @relation(fields: [ownerId], references: [id])
+  reservations Reservation[]
+  campaigns    Campaign[]
+}
+
+model Reservation {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  stationId Int
+  date      DateTime
+  hour      String   
+  isGreen   Boolean  @default(false)
+  
+  // Bu şarjdan kazanılanlar
+  earnedCoins Int      @default(0)
+  savedCo2    Float    @default(0.0) // Bu işlemdeki CO2 tasarrufu
+
+  status    String   @default("PENDING")
+
+  user    User    @relation(fields: [userId], references: [id])
+  station Station @relation(fields: [stationId], references: [id])
+}

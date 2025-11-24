@@ -25,6 +25,7 @@ export default function AuthLandingPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
+	// Predict role based on email domain or known demo emails
 	const predictedRole = useMemo(() => {
 		const e = email.trim().toLowerCase();
 		if (!e || !e.includes("@")) return null;
@@ -32,11 +33,13 @@ export default function AuthLandingPage() {
 		if (e === DEMO_EMAILS.operator) return "Operatör";
 		const domain = e.split("@")[1];
 		if (!domain) return null;
+		// Simple heuristic: corporate domains treated as operator if not generic mail providers
 		const consumerDomains = ["gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "icloud.com", "proton.me", "protonmail.com"];
 		if (consumerDomains.includes(domain)) return "Sürücü";
+		// If domain contains keywords
 		const operatorHints = ["enerji", "energy", "power", "elektrik", "grid", "charge", "ev", "zorlu", "shell", "bp", "tesla"];
 		if (operatorHints.some((k) => domain.includes(k))) return "Operatör";
-		return "Sürücü";
+		return "Sürücü"; // default lean to driver perspective for UX
 	}, [email]);
 
 	const handleSubmit = async (targetEmail?: string) => {
@@ -89,7 +92,7 @@ export default function AuthLandingPage() {
 							<Rocket className="h-4 w-4" /> Hackathon Prototype
 						</span>
 						<h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">
-							<span className="text-gradient-eco">EcoCharge AI:</span> Smart Charging, Less Carbon.
+							<span className="text-gradient-eco">SmartCharge AI:</span> Smart Charging, Less Carbon.
 						</h1>
 						<p className="mt-5 max-w-2xl text-base text-slate-300">
 							AI destekli yeşil slot önerileri, anlık istasyon içgörüleri ve oyunlaştırılmış ödül sistemiyle elektrikli
@@ -201,10 +204,10 @@ export default function AuthLandingPage() {
 										<span className="flex items-center justify-center gap-2"><ArrowRight className="h-4 w-4" /> Operatör Demo</span>
 									</button>
 								</div>
-								<p className="mt-4 text-[10px] leading-relaxed text-slate-500">
-									Rol ataması demo amaçlıdır. Gerçek ürün versiyonunda kurumsal kimlik doğrulama, istasyon sahipliği doğrulaması ve
-									çok faktörlü erişim kontrolü eklenecektir.
-								</p>
+									<p className="mt-4 text-[10px] leading-relaxed text-slate-500">
+										Rol ataması demo amaçlıdır. Gerçek ürün versiyonunda kurumsal kimlik doğrulama, istasyon sahipliği doğrulaması ve
+										çok faktörlü erişim kontrolü eklenecektir.
+									</p>
 							</div>
 						</section>
 					</div>
