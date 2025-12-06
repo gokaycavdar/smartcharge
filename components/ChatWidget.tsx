@@ -39,8 +39,38 @@ export default function ChatWidget() {
     scrollToBottom();
   }, [messages, isOpen]);
 
+  const [userId, setUserId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const initUser = async () => {
+      // Try local storage first
+      const storedId = typeof window !== "undefined" ? localStorage.getItem("ecocharge:userId") : null;
+      if (storedId) setUserId(Number.parseInt(storedId, 10));
+
+      // Sync with demo user from DB
+      try {
+        const res = await fetch("/api/demo-user");
+        if (res.ok) {
+          const user = await res.json();
+          setUserId(user.id);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("ecocharge:userId", user.id.toString());
+          }
+        }
+      } catch (e) {
+        console.error("Failed to sync demo user", e);
+      }
+    };
+    
+    initUser();
+  }, []);
+
   const handleSend = async () => {
     if (!input.trim()) return;
+    if (!userId) {
+      setMessages(prev => [...prev, { role: "bot", content: "Kullanıcı bilgisi yükleniyor, lütfen bekleyin..." }]);
+      return;
+    }
 
     const userMessage = input;
     setInput("");
@@ -51,7 +81,7 @@ export default function ChatWidget() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, userId: 10 }), // Mock userId (Driver)
+        body: JSON.stringify({ message: userMessage, userId }), // Use dynamic userId
       });
 
       if (!res.ok) throw new Error("Failed to fetch");
@@ -76,12 +106,16 @@ export default function ChatWidget() {
   };
 
   const handleBook = async (rec: Recommendation) => {
+    if (!userId) {
+      alert("Kullanıcı bilgisi bulunamadı.");
+      return;
+    }
     try {
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: 10, // Mock userId (Driver)
+          userId, // Use dynamic userId
           stationId: rec.id,
           date: new Date().toISOString(), // Today
           hour: rec.hour,

@@ -54,42 +54,60 @@ export default function Map({ stations, onSelect, initialCenter, zoom = 12 }: Ma
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {stations.map((station) => {
-          const statusColor = 
-            station.mockStatus === "RED" ? "#ef4444" : 
-            station.mockStatus === "YELLOW" ? "#eab308" : 
-            "#22c55e"; // Green
+          const status = station.mockStatus || "GREEN";
+          const load = station.mockLoad || 0;
+          
+          let colorClass = "bg-green-500";
+          let shadowClass = "shadow-green-500/50";
+          
+          if (status === "YELLOW") {
+            colorClass = "bg-yellow-500";
+            shadowClass = "shadow-yellow-500/50";
+          } else if (status === "RED") {
+            colorClass = "bg-red-500";
+            shadowClass = "shadow-red-500/50";
+          }
+
+          const isHighDensity = status === "RED";
+          const pulseHtml = isHighDensity ? `<div class="absolute inset-0 rounded-full ${colorClass} animate-ping opacity-75"></div>` : "";
+
+          const customIcon = L.divIcon({
+            className: "custom-station-icon bg-transparent border-none",
+            html: `
+              <div class="relative flex items-center justify-center w-12 h-12 -ml-2 -mt-2">
+                ${pulseHtml}
+                <div class="relative w-8 h-8 rounded-full border-2 border-white ${colorClass} ${shadowClass} shadow-lg flex items-center justify-center z-10">
+                   <span class="text-[10px] font-bold text-white">${load}%</span>
+                </div>
+              </div>
+            `,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+          });
 
           return (
             <Fragment key={station.id}>
-              <Circle
-                center={[station.lat, station.lng]}
-                pathOptions={{ 
-                  fillColor: statusColor, 
-                  color: statusColor, 
-                  fillOpacity: 0.6, 
-                  weight: 0 
-                }}
-                radius={500}
-              />
-              <Marker position={[station.lat, station.lng] as LatLngExpression}
+              <Marker 
+                position={[station.lat, station.lng] as LatLngExpression}
+                icon={customIcon}
                 eventHandlers={{ click: () => onSelect(station) }}
               >
                 <Popup>
-                  <div className="space-y-1 text-center text-slate-900">
+                  <div className="space-y-1 text-center text-slate-900 min-w-[150px]">
                     <p className="text-sm font-semibold">{station.name}</p>
                     <p className="text-xs text-slate-600">{station.ownerName ?? "EcoCharge Partner"}</p>
                     <p className="text-xs font-medium">{station.price.toFixed(2)} ₺/kWh</p>
                     <div className="mt-1 flex justify-center">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${
-                        station.mockStatus === "RED" ? "bg-red-500" : 
-                        station.mockStatus === "YELLOW" ? "bg-yellow-500" : 
+                        status === "RED" ? "bg-red-500" : 
+                        status === "YELLOW" ? "bg-yellow-500" : 
                         "bg-green-500"
                       }`}>
-                        %{station.mockLoad} Yoğunluk
+                        %{load} Yoğunluk
                       </span>
                     </div>
                     <button
-                      className="mt-2 w-full rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-500"
+                      className="mt-2 w-full rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-500 transition"
                       onClick={() => onSelect(station)}
                       type="button"
                     >

@@ -92,8 +92,7 @@ export default function AuthLandingPage() {
 							<span className="text-gradient-eco">SmartCharge AI:</span> Smart Charging, Less Carbon.
 						</h1>
 						<p className="mt-5 max-w-2xl text-base text-slate-200">
-							AI destekli yeşil slot önerileri, anlık istasyon içgörüleri ve oyunlaştırılmış ödül sistemiyle elektrikli
-							araç şarj deneyimini yeniden düşün. 24 saatlik sprint MVP.
+							
 						</p>
 					</header>
 
@@ -102,7 +101,7 @@ export default function AuthLandingPage() {
 							<div className="grid gap-5 sm:grid-cols-2">
 								<Card className="group transition hover:border-blue-400/50 bg-slate-700/50 border-slate-600">
 									<h2 className="text-sm font-semibold text-white flex items-center gap-2">
-										<span className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_0_4px_rgba(59,130,246,.3)]" /> Drivers
+										<span className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_0_4px_rgba(59,130,246,.3)]" /> Sürücü
 									</h2>
 									<p className="mt-2 text-xs leading-relaxed text-slate-200">
 										Düşük şebeke yükü saatlerini yakala, ekstra coin kazan, karbon ayak izini azalt.
@@ -110,7 +109,7 @@ export default function AuthLandingPage() {
 								</Card>
 								<Card className="group transition hover:border-purple-400/50 bg-slate-700/50 border-slate-600">
 									<h2 className="text-sm font-semibold text-white flex items-center gap-2">
-										<span className="h-2 w-2 rounded-full bg-purple-500 shadow-[0_0_0_4px_rgba(168,85,247,.35)]" /> Operators
+										<span className="h-2 w-2 rounded-full bg-purple-500 shadow-[0_0_0_4px_rgba(168,85,247,.35)]" /> Operatör
 									</h2>
 									<p className="mt-2 text-xs leading-relaxed text-slate-200">
 										Gelir, yük dengesi ve yeşil teşvik performansını tek panelden yönet.
@@ -118,17 +117,7 @@ export default function AuthLandingPage() {
 								</Card>
 							</div>
 
-							<Card className="p-0 overflow-hidden bg-slate-700/50 border-slate-600">
-								<div className="relative h-32 w-full">
-									<div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-transparent to-green-500/20" />
-									<div className="absolute inset-0 flex items-center px-6">
-										<p className="text-sm text-slate-200 max-w-md leading-relaxed">
-											Gerçek zamanlı yük simülasyonu ve hızlandırılmış rezervasyon akışı ile yatırım potansiyelini
-											canlı test et.
-										</p>
-									</div>
-								</div>
-							</Card>
+
 						</section>
 
 						<section className="rounded-3xl border border-slate-600/70 bg-slate-800/80 p-7 shadow-lg backdrop-blur-xl">
@@ -201,6 +190,7 @@ export default function AuthLandingPage() {
 										<span className="flex items-center justify-center gap-2"><ArrowRight className="h-4 w-4" /> Operatör Demo</span>
 									</button>
 								</div>
+
 								<p className="mt-4 text-[10px] leading-relaxed text-slate-400">
 									Rol ataması demo amaçlıdır. Gerçek ürün versiyonunda kurumsal kimlik doğrulama, istasyon sahipliği doğrulaması ve
 									çok faktörlü erişim kontrolü eklenecektir.

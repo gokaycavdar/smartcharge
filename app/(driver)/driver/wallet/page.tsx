@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Award, Coins, Leaf, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Award, Coins, Leaf, Loader2, Sparkles, Trophy, Users } from "lucide-react";
 import Link from "next/link";
+import { MOCK_LEADERBOARD } from "@/lib/utils-ai";
 
 type Badge = {
 	id: number;
@@ -40,6 +41,7 @@ export default function DriverWalletPage() {
 	const [user, setUser] = useState<UserPayload | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [activeTab, setActiveTab] = useState<"overview" | "badges" | "leaderboard">("overview");
 
 	useEffect(() => {
 		const userId = typeof window !== "undefined" ? localStorage.getItem("ecocharge:userId") : null;
@@ -80,128 +82,257 @@ export default function DriverWalletPage() {
 	}, [user]);
 
 	return (
-		<main className="min-h-screen bg-slate-800 text-white">
+		<main className="min-h-screen bg-slate-900 text-white font-sans">
 			<div className="relative">
-				<div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-700 to-emerald-900/30" />
-				<div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12">
-					<header className="flex flex-wrap items-center justify-between gap-4">
+				<div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-900 to-slate-900" />
+				<div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12">
+					
+					{/* Header */}
+					<header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-8">
 						<div>
-							<p className="text-xs uppercase tracking-widest text-green-400">Rozetler ve Kazançlarım </p>
-							<h1 className="mt-2 text-3xl font-semibold text-white sm:text-4xl">Cüzdan</h1>
-							<p className="mt-2 max-w-2xl text-sm text-slate-200">
-								Yeşil slotlardan topladığın coinler ve karbon tasarrufların burada. Devam ettikçe yeni rozetler kazan!
+							<div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-400">
+								<Sparkles className="h-4 w-4" />
+								<span>Gamification Hub</span>
+							</div>
+							<h1 className="mt-2 text-4xl font-bold text-white tracking-tight">Sürücü Cüzdanı</h1>
+							<p className="mt-2 max-w-2xl text-slate-400">
+								Yeşil şarj ile kazandığın coinler, rozetler ve liderlik durumu.
 							</p>
 						</div>
 						<Link
 							href="/driver"
-							className="inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-700/60 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-blue-500/50 hover:text-white"
+							className="group inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-5 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400"
 						>
-							<ArrowLeft className="h-4 w-4" /> Haritaya Dön
+							<ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" /> Haritaya Dön
 						</Link>
 					</header>
 
+					{/* Tabs */}
+					<div className="flex gap-8 border-b border-slate-800 px-2">
+						<button 
+							onClick={() => setActiveTab("overview")} 
+							className={`relative pb-4 text-sm font-medium transition-colors ${activeTab === "overview" ? "text-blue-400" : "text-slate-400 hover:text-slate-200"}`}
+						>
+							Genel Bakış
+							{activeTab === "overview" && <span className="absolute bottom-0 left-0 h-0.5 w-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />}
+						</button>
+						<button 
+							onClick={() => setActiveTab("badges")} 
+							className={`relative pb-4 text-sm font-medium transition-colors ${activeTab === "badges" ? "text-blue-400" : "text-slate-400 hover:text-slate-200"}`}
+						>
+							Rozetlerim
+							{activeTab === "badges" && <span className="absolute bottom-0 left-0 h-0.5 w-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />}
+						</button>
+						<button 
+							onClick={() => setActiveTab("leaderboard")} 
+							className={`relative pb-4 text-sm font-medium transition-colors ${activeTab === "leaderboard" ? "text-blue-400" : "text-slate-400 hover:text-slate-200"}`}
+						>
+							Liderlik Tablosu
+							{activeTab === "leaderboard" && <span className="absolute bottom-0 left-0 h-0.5 w-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />}
+						</button>
+					</div>
+
 					{isLoading ? (
-						<div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-300">
-							<Loader2 className="h-6 w-6 animate-spin" />
-							<p>Verilerin yükleniyor...</p>
+						<div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-400">
+							<Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+							<p>Cüzdan verileri senkronize ediliyor...</p>
 						</div>
 					) : error ? (
 						<div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-10 text-center text-sm text-red-200">
 							{error}
 						</div>
 					) : user ? (
-						<section className="space-y-10">
-							<div className="grid gap-6 md:grid-cols-3">
-								<div className="rounded-3xl border border-slate-600 bg-slate-700/60 p-6 shadow-lg">
-									<div className="flex items-center justify-between text-xs text-slate-300">
-										<span>Toplam Coin</span>
-										<Coins className="h-4 w-4 text-yellow-400" />
-									</div>
-									<p className="mt-4 text-4xl font-semibold text-yellow-300">{user.coins.toLocaleString()}</p>
-									<p className="mt-2 text-xs text-slate-300">Yeşil slotlardan maksimum katma değer.</p>
-								</div>
+						<div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+							
+							{/* OVERVIEW TAB */}
+							{activeTab === "overview" && (
+								<div className="space-y-8">
+									{/* Stats Cards */}
+									<div className="grid gap-6 md:grid-cols-3">
+										<div className="group relative overflow-hidden rounded-3xl border border-slate-700 bg-slate-800/50 p-8 transition hover:border-yellow-500/30">
+											<div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-yellow-500/10 blur-2xl transition group-hover:bg-yellow-500/20" />
+											<div className="flex items-center justify-between text-sm font-medium text-slate-400">
+												<span>Toplam Coin</span>
+												<Coins className="h-5 w-5 text-yellow-500" />
+											</div>
+											<p className="mt-4 text-5xl font-bold text-white tracking-tight">{user.coins.toLocaleString()}</p>
+											<p className="mt-2 text-xs text-slate-400">Yeşil slotlardan kazanılan toplam değer.</p>
+										</div>
 
-								<div className="rounded-3xl border border-slate-600 bg-slate-700/60 p-6 shadow-lg">
-									<div className="flex items-center justify-between text-xs text-slate-300">
-										<span>CO₂ Tasarrufu</span>
-										<Leaf className="h-4 w-4 text-green-400" />
-									</div>
-									<p className="mt-4 text-4xl font-semibold text-green-300">{user.co2Saved.toFixed(1)} kg</p>
-									<p className="mt-2 text-xs text-slate-300 flex items-center gap-1">
-										<Sparkles className="h-3 w-3 text-green-300" /> {totalGreenSessions} yeşil slot rezervasyonu
-									</p>
-								</div>
+										<div className="group relative overflow-hidden rounded-3xl border border-slate-700 bg-slate-800/50 p-8 transition hover:border-green-500/30">
+											<div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-green-500/10 blur-2xl transition group-hover:bg-green-500/20" />
+											<div className="flex items-center justify-between text-sm font-medium text-slate-400">
+												<span>CO₂ Tasarrufu</span>
+												<Leaf className="h-5 w-5 text-green-500" />
+											</div>
+											<p className="mt-4 text-5xl font-bold text-white tracking-tight">{user.co2Saved.toFixed(1)} <span className="text-2xl text-slate-500">kg</span></p>
+											<p className="mt-2 text-xs text-slate-400 flex items-center gap-1">
+												<Sparkles className="h-3 w-3 text-green-400" /> {totalGreenSessions} yeşil şarj işlemi
+											</p>
+										</div>
 
-								<div className="rounded-3xl border border-slate-600 bg-slate-700/60 p-6 shadow-lg">
-									<div className="flex items-center justify-between text-xs text-slate-300">
-										<span>XP Seviyesi</span>
-										<Award className="h-4 w-4 text-blue-300" />
+										<div className="group relative overflow-hidden rounded-3xl border border-slate-700 bg-slate-800/50 p-8 transition hover:border-blue-500/30">
+											<div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl transition group-hover:bg-blue-500/20" />
+											<div className="flex items-center justify-between text-sm font-medium text-slate-400">
+												<span>XP Seviyesi</span>
+												<Award className="h-5 w-5 text-blue-500" />
+											</div>
+											<p className="mt-4 text-5xl font-bold text-white tracking-tight">{user.xp.toLocaleString()}</p>
+											<p className="mt-2 text-xs text-slate-400">Sonraki seviyeye 450 XP kaldı.</p>
+										</div>
 									</div>
-									<p className="mt-4 text-4xl font-semibold text-blue-300">{user.xp.toLocaleString()}</p>
-									<p className="mt-2 text-xs text-slate-300">Aktif görevler ve enerji tasarruflarıyla yükseliyor.</p>
-								</div>
-							</div>
 
-							<div className="grid gap-8 lg:grid-cols-[1.4fr,1fr]">
-								<div className="rounded-3xl border border-slate-600 bg-slate-700/60 p-6 shadow-lg">
-									<div className="flex items-center justify-between">
-										<h2 className="text-lg font-semibold text-white">Rozet Koleksiyonu</h2>
-										<span className="rounded-full bg-slate-600 px-3 py-1 text-xs text-slate-200">
-											{user.badges.length} rozet
-										</span>
+									{/* Recent Activity */}
+									<div className="rounded-3xl border border-slate-700 bg-slate-800/30 p-8">
+										<h2 className="mb-6 text-xl font-bold text-white">Son Aktiviteler</h2>
+										{latestReservations.length === 0 ? (
+											<div className="flex flex-col items-center justify-center py-12 text-slate-500">
+												<Leaf className="h-12 w-12 opacity-20 mb-4" />
+												<p>Henüz bir aktivite bulunmuyor.</p>
+											</div>
+										) : (
+											<div className="space-y-3">
+												{latestReservations.map((reservation) => (
+													<div
+														key={reservation.id}
+														className="group flex items-center justify-between rounded-2xl border border-slate-700/50 bg-slate-800/50 px-6 py-4 transition hover:border-slate-600 hover:bg-slate-800"
+													>
+														<div className="flex items-center gap-4">
+															<div className={`flex h-10 w-10 items-center justify-center rounded-full ${reservation.isGreen ? "bg-green-500/20 text-green-400" : "bg-slate-700 text-slate-400"}`}>
+																{reservation.isGreen ? <Leaf className="h-5 w-5" /> : <Award className="h-5 w-5" />}
+															</div>
+															<div>
+																<p className="font-semibold text-white">{reservation.station.name}</p>
+																<p className="text-xs text-slate-400">
+																	{new Date(reservation.date).toLocaleDateString("tr-TR", { day: "numeric", month: "long" })} • {reservation.hour}
+																</p>
+															</div>
+														</div>
+														<div className="text-right">
+															<p className={`font-bold ${reservation.isGreen ? "text-yellow-400" : "text-slate-300"}`}>
+																+{reservation.earnedCoins} Coin
+															</p>
+															{reservation.isGreen && (
+																<span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-400">
+																	Eco Slot
+																</span>
+															)}
+														</div>
+													</div>
+												))}
+											</div>
+										)}
 									</div>
+								</div>
+							)}
+
+							{/* BADGES TAB */}
+							{activeTab === "badges" && (
+								<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 									{user.badges.length === 0 ? (
-										<p className="mt-6 text-sm text-slate-300">Henüz rozet kazanmadın. Yeşil slotları deneyerek başlayabilirsin.</p>
-									) : (
-										<div className="mt-6 grid gap-4 sm:grid-cols-2">
-											{user.badges.map((badge) => (
-												<div
-													key={badge.id}
-													className="flex flex-col gap-2 rounded-2xl border border-slate-600 bg-slate-700/80 p-4 text-sm text-slate-200"
-												>
-													<span className="text-2xl">{badge.icon}</span>
-													<p className="font-semibold text-white">{badge.name}</p>
-													<p className="text-xs text-slate-300">{badge.description}</p>
-												</div>
-											))}
+										<div className="col-span-full flex flex-col items-center justify-center py-24 text-slate-500">
+											<Award className="h-16 w-16 opacity-20 mb-4" />
+											<p>Henüz rozet kazanmadın. Görevleri tamamla!</p>
 										</div>
+									) : (
+										user.badges.map((badge) => (
+											<div
+												key={badge.id}
+												className="group relative flex flex-col items-center gap-4 rounded-3xl border border-slate-700 bg-slate-800/50 p-8 text-center transition hover:border-blue-500/30 hover:bg-slate-800"
+											>
+												<div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 transition group-hover:opacity-100 rounded-3xl" />
+												<span className="text-6xl drop-shadow-2xl filter transition group-hover:scale-110 duration-300">{badge.icon}</span>
+												<div className="relative">
+													<h3 className="text-lg font-bold text-white">{badge.name}</h3>
+													<p className="mt-2 text-sm text-slate-400 leading-relaxed">{badge.description}</p>
+												</div>
+											</div>
+										))
 									)}
+									{/* Locked Badge Example */}
+									<div className="flex flex-col items-center gap-4 rounded-3xl border border-dashed border-slate-700 bg-slate-900/30 p-8 text-center opacity-60 grayscale">
+										<span className="text-6xl">⚡</span>
+										<div>
+											<h3 className="text-lg font-bold text-slate-300">Hızlı Şarj Ustası</h3>
+											<p className="mt-2 text-sm text-slate-500">5 kez hızlı şarj istasyonu kullan.</p>
+											<div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+												<div className="h-full w-1/3 bg-slate-600" />
+											</div>
+											<p className="mt-1 text-[10px] text-slate-500">1/5 Tamamlandı</p>
+										</div>
+									</div>
 								</div>
+							)}
 
-								<div className="rounded-3xl border border-slate-600 bg-slate-700/60 p-6 shadow-lg">
-									<h2 className="text-lg font-semibold text-white">Son Rezervasyonlar</h2>
-									{latestReservations.length === 0 ? (
-										<p className="mt-4 text-sm text-slate-300">Henüz kayıtlı rezervasyonun bulunmuyor.</p>
-									) : (
-										<div className="mt-5 space-y-4">
-											{latestReservations.map((reservation) => (
-												<div
-													key={reservation.id}
-													className="flex items-center justify-between rounded-2xl border border-slate-600 bg-slate-700/70 px-4 py-3 text-xs"
+							{/* LEADERBOARD TAB */}
+							{activeTab === "leaderboard" && (
+								<div className="mx-auto max-w-3xl">
+									<div className="rounded-[2rem] border border-slate-700 bg-slate-800/50 p-8 shadow-2xl">
+										<div className="mb-8 flex items-center justify-between">
+											<h2 className="flex items-center gap-3 text-2xl font-bold text-white">
+												<Trophy className="h-8 w-8 text-yellow-500" />
+												Haftanın Liderleri
+											</h2>
+											<span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-slate-300">
+												Sıfırlanmaya 2 gün kaldı
+											</span>
+										</div>
+										
+										<div className="space-y-4">
+											{MOCK_LEADERBOARD.map((u, i) => (
+												<div 
+													key={u.id} 
+													className={`relative flex items-center justify-between rounded-2xl border p-4 transition-all hover:scale-[1.01] ${
+														i === 0 ? "border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 to-transparent" :
+														i === 1 ? "border-slate-400/30 bg-slate-800/80" :
+														i === 2 ? "border-orange-500/30 bg-orange-500/5" :
+														"border-slate-700 bg-slate-800/30"
+													}`}
 												>
-													<div>
-														<p className="font-semibold text-slate-200">{reservation.station.name}</p>
-														<p className="mt-1 text-slate-300">
-															{new Date(reservation.date).toLocaleDateString("tr-TR", {
-																day: "2-digit",
-																month: "short",
-															})}
-															, {reservation.hour}
-														</p>
+													<div className="flex items-center gap-6">
+														<div className={`flex h-10 w-10 items-center justify-center rounded-full font-bold shadow-lg ${
+															i === 0 ? "bg-yellow-500 text-black ring-4 ring-yellow-500/20" :
+															i === 1 ? "bg-slate-300 text-black" :
+															i === 2 ? "bg-orange-400 text-black" :
+															"bg-slate-700 text-slate-400"
+														}`}>
+															{i + 1}
+														</div>
+														<div>
+															<p className={`font-bold ${i === 0 ? "text-yellow-400" : "text-white"}`}>{u.name}</p>
+															<p className="text-xs text-slate-500">Sürücü Ligi</p>
+														</div>
 													</div>
-													<div className="text-right">
-														<p className={`font-semibold ${reservation.isGreen ? "text-green-300" : "text-slate-300"}`}>
-															+{reservation.earnedCoins} coin
-														</p>
-														<p className="mt-1 text-slate-400">{reservation.isGreen ? "Eco Slot" : "Standart"}</p>
+													<div className="flex items-center gap-6">
+														<span className="text-2xl filter drop-shadow-lg">{u.badge}</span>
+														<div className="text-right">
+															<p className="font-mono text-lg font-bold text-blue-300">{u.xp.toLocaleString()} XP</p>
+														</div>
 													</div>
 												</div>
 											))}
+											
+											{/* User's Rank (Fake) */}
+											<div className="mt-8 border-t border-slate-700 pt-6">
+												<div className="flex items-center justify-between rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4">
+													<div className="flex items-center gap-6">
+														<div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/30">
+															12
+														</div>
+														<div>
+															<p className="font-bold text-white">Sen</p>
+															<p className="text-xs text-blue-300">Yükseliştesin! 🚀</p>
+														</div>
+													</div>
+													<div className="font-mono text-lg font-bold text-blue-300">{user.xp.toLocaleString()} XP</div>
+												</div>
+											</div>
 										</div>
-									)}
+									</div>
 								</div>
-							</div>
-						</section>
+							)}
+
+						</div>
 					) : null}
 				</div>
 			</div>

@@ -49,8 +49,6 @@ async function main() {
       name: "Hackathon Sürücü",
       email: "driver@test.com",
       role: "DRIVER",
-      coins: 150,
-      xp: 500,
       badges: { connect: [{ id: badgeNight.id }, { id: badgeEco.id }, { id: badgeWeekend.id }, { id: badgeEarlyBird.id }] }
     }
   })
