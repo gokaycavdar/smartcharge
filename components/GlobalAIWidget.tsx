@@ -157,10 +157,10 @@ export default function GlobalAIWidget() {
       {/* Centered Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-5xl overflow-hidden rounded-[2rem] border border-slate-700 bg-slate-900 shadow-2xl ring-1 ring-white/10">
+          <div className="relative w-full max-w-5xl overflow-hidden rounded-[2rem] border border-slate-600 bg-slate-800 shadow-2xl ring-1 ring-white/10">
             
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-8 py-6 backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-slate-700 bg-slate-800/50 px-8 py-6 backdrop-blur-xl">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20 text-purple-400">
                   <Sparkles className="h-6 w-6" />
@@ -172,7 +172,7 @@ export default function GlobalAIWidget() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-full bg-slate-800 p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+                className="rounded-full bg-slate-700 p-2 text-slate-400 transition hover:bg-slate-600 hover:text-white"
               >
                 <X className="h-6 w-6" />
               </button>

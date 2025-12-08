@@ -88,20 +88,20 @@ export default function NewStationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white font-sans">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+      <header className="border-b border-slate-200 bg-white/50 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link 
               href="/operator/stations" 
-              className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition"
+              className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition"
             >
               <ArrowLeft size={20} />
             </Link>
-            <h1 className="text-lg font-semibold">Yeni İstasyon Ekle</h1>
+            <h1 className="text-lg font-semibold text-slate-900">Yeni İstasyon Ekle</h1>
           </div>
-          <div className="text-sm text-slate-400">
+          <div className="text-sm text-slate-500">
             Adım {currentStep} / {STEPS.length}
           </div>
         </div>
@@ -111,9 +111,9 @@ export default function NewStationPage() {
         {/* Progress Steps */}
         <div className="mb-10">
           <div className="flex items-center justify-between relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-800 -z-10"></div>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-200 -z-10"></div>
             <div 
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-purple-600 transition-all duration-500 -z-10"
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-blue-600 transition-all duration-500 -z-10"
               style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
             ></div>
             
@@ -122,19 +122,19 @@ export default function NewStationPage() {
               const isCompleted = step.id < currentStep;
               
               return (
-                <div key={step.id} className="flex flex-col items-center gap-2 bg-slate-900 px-2">
+                <div key={step.id} className="flex flex-col items-center gap-2 bg-slate-50 px-2">
                   <div 
                     className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
                       isActive 
-                        ? "border-purple-500 bg-purple-500/20 text-purple-400" 
+                        ? "border-blue-500 bg-blue-50 text-blue-600" 
                         : isCompleted 
-                          ? "border-purple-500 bg-purple-500 text-white" 
-                          : "border-slate-700 bg-slate-800 text-slate-500"
+                          ? "border-blue-500 bg-blue-600 text-white" 
+                          : "border-slate-300 bg-white text-slate-400"
                     }`}
                   >
                     {isCompleted ? <Check size={18} /> : <step.icon size={18} />}
                   </div>
-                  <span className={`text-xs font-medium ${isActive ? "text-white" : "text-slate-500"}`}>
+                  <span className={`text-xs font-medium ${isActive ? "text-blue-600" : "text-slate-500"}`}>
                     {step.title}
                   </span>
                 </div>
@@ -144,17 +144,17 @@ export default function NewStationPage() {
         </div>
 
         {/* Form Content */}
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl">
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-lg shadow-slate-200/50">
           {currentStep === 1 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <h2 className="text-xl font-bold text-white mb-6">İstasyon Özellikleri</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-6">İstasyon Özellikleri</h2>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">İstasyon Adı</label>
+                <label className="text-sm font-medium text-slate-700">İstasyon Adı</label>
                 <input 
                   type="text" 
                   placeholder="Örn: Alsancak Hızlı Şarj" 
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                 />
@@ -162,15 +162,15 @@ export default function NewStationPage() {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Şarj Tipi</label>
+                  <label className="text-sm font-medium text-slate-700">Şarj Tipi</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button 
                       type="button"
                       onClick={() => setFormData({...formData, type: "AC"})}
                       className={`p-3 rounded-xl border text-center transition ${
                         formData.type === "AC" 
-                          ? "border-purple-500 bg-purple-500/10 text-purple-400" 
-                          : "border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600"
+                          ? "border-blue-500 bg-blue-50 text-blue-600" 
+                          : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
                       }`}
                     >
                       AC
@@ -180,8 +180,8 @@ export default function NewStationPage() {
                       onClick={() => setFormData({...formData, type: "DC"})}
                       className={`p-3 rounded-xl border text-center transition ${
                         formData.type === "DC" 
-                          ? "border-purple-500 bg-purple-500/10 text-purple-400" 
-                          : "border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600"
+                          ? "border-blue-500 bg-blue-50 text-blue-600" 
+                          : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
                       }`}
                     >
                       DC
@@ -190,10 +190,10 @@ export default function NewStationPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Güç (kW)</label>
+                  <label className="text-sm font-medium text-slate-700">Güç (kW)</label>
                   <input 
                     type="number" 
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
                     value={formData.power}
                     onChange={(e) => setFormData({...formData, power: Number(e.target.value)})}
                   />
@@ -201,9 +201,9 @@ export default function NewStationPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Soket Tipi</label>
+                <label className="text-sm font-medium text-slate-700">Soket Tipi</label>
                 <select 
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition appearance-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition appearance-none"
                   value={formData.connectorType}
                   onChange={(e) => setFormData({...formData, connectorType: e.target.value})}
                 >
@@ -217,9 +217,9 @@ export default function NewStationPage() {
 
           {currentStep === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <h2 className="text-xl font-bold text-white mb-6">Konum Bilgileri</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Konum Bilgileri</h2>
               
-              <div className="bg-slate-900 rounded-xl border border-slate-700 p-4 h-48 flex items-center justify-center text-slate-500 mb-4">
+              <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 h-48 flex items-center justify-center text-slate-400 mb-4">
                 <div className="text-center">
                   <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">Harita Seçimi (Simülasyon)</p>
@@ -228,21 +228,21 @@ export default function NewStationPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Enlem</label>
+                  <label className="text-sm font-medium text-slate-700">Enlem</label>
                   <input 
                     type="number" 
                     step="0.0001"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder-slate-500 focus:border-purple-500 outline-none transition"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 placeholder-slate-400 focus:border-blue-500 outline-none transition"
                     value={formData.latitude}
                     onChange={(e) => setFormData({...formData, latitude: Number(e.target.value)})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Boylam</label>
+                  <label className="text-sm font-medium text-slate-700">Boylam</label>
                   <input 
                     type="number" 
                     step="0.0001"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder-slate-500 focus:border-purple-500 outline-none transition"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 placeholder-slate-400 focus:border-blue-500 outline-none transition"
                     value={formData.longitude}
                     onChange={(e) => setFormData({...formData, longitude: Number(e.target.value)})}
                   />
@@ -250,11 +250,11 @@ export default function NewStationPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Açık Adres</label>
+                <label className="text-sm font-medium text-slate-700">Açık Adres</label>
                 <textarea 
                   rows={3}
                   placeholder="Mahalle, Cadde, No..." 
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder-slate-500 focus:border-purple-500 outline-none transition resize-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 placeholder-slate-400 focus:border-blue-500 outline-none transition resize-none"
                   value={formData.address}
                   onChange={(e) => setFormData({...formData, address: e.target.value})}
                 />
@@ -264,27 +264,27 @@ export default function NewStationPage() {
 
           {currentStep === 3 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <h2 className="text-xl font-bold text-white mb-6">Fiyatlandırma</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-6">Fiyatlandırma</h2>
               
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30 mb-6">
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 mb-6">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-purple-500/20 text-purple-400">
+                  <div className="p-3 rounded-full bg-blue-100 text-blue-600">
                     <DollarSign size={24} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">Birim Fiyat</h3>
-                    <p className="text-sm text-slate-400">kWh başına ücretlendirme</p>
+                    <h3 className="font-semibold text-slate-900">Birim Fiyat</h3>
+                    <p className="text-sm text-slate-500">kWh başına ücretlendirme</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Birim Fiyat (₺/kWh)</label>
+                <label className="text-sm font-medium text-slate-700">Birim Fiyat (₺/kWh)</label>
                 <div className="relative">
                   <input 
                     type="number" 
                     step="0.1"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 pl-12 text-white text-lg font-semibold placeholder-slate-500 focus:border-purple-500 outline-none transition"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 pl-12 text-slate-900 text-lg font-semibold placeholder-slate-400 focus:border-blue-500 outline-none transition"
                     value={formData.price}
                     onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
                   />
@@ -298,14 +298,14 @@ export default function NewStationPage() {
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex items-center justify-between mt-10 pt-6 border-t border-slate-700">
+          <div className="flex items-center justify-between mt-10 pt-6 border-t border-slate-100">
             <button 
               onClick={handleBack}
               disabled={currentStep === 1}
               className={`px-6 py-3 rounded-xl font-medium transition ${
                 currentStep === 1 
-                  ? "text-slate-600 cursor-not-allowed" 
-                  : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                  ? "text-slate-400 cursor-not-allowed" 
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
               Geri
@@ -314,7 +314,7 @@ export default function NewStationPage() {
             <button 
               onClick={handleNext}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-8 py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-500 transition shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-8 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>

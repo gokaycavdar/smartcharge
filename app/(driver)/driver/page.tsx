@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { BatteryCharging, Leaf, Loader2, Zap, X, PartyPopper, Megaphone, Sparkles, MapPin } from "lucide-react";
+import { BatteryCharging, Leaf, Loader2, Zap, X, PartyPopper, Megaphone, Sparkles, MapPin, ArrowRight, Navigation } from "lucide-react";
 import type { StationMarker } from "@/components/Map";
 import { generateDynamicTimeslots, calculateGreenRewards, getDensityLevel } from "@/lib/utils-ai";
 
@@ -263,19 +263,17 @@ export default function DriverDashboard() {
     // If current station is not busy (GREEN), no need for recommendation
     if (selectedStation.mockStatus === "GREEN") return null;
 
-    // Find nearby stations (simple distance check) that are GREEN
-    // Since we don't have complex geo-lib, we'll just check lat/lng diff
-    const nearbyGreenStations = stations.filter(s => 
+    // Find stations that are NOT RED (High Density)
+    // User explicitly said proximity is less important than density
+    const betterStations = stations.filter(s => 
       s.id !== selectedStation.id && 
-      s.mockStatus === "GREEN" &&
-      Math.abs(s.lat - selectedStation.lat) < 0.1 && // Roughly nearby
-      Math.abs(s.lng - selectedStation.lng) < 0.1
+      s.mockStatus !== "RED" // Filter out other high density stations
     );
 
-    if (nearbyGreenStations.length === 0) return null;
+    if (betterStations.length === 0) return null;
 
     // Pick the one with lowest load
-    return nearbyGreenStations.sort((a, b) => (a.mockLoad || 100) - (b.mockLoad || 100))[0];
+    return betterStations.sort((a, b) => (a.mockLoad || 100) - (b.mockLoad || 100))[0];
   }, [selectedStation, stations]);
 
   return (
@@ -425,9 +423,63 @@ export default function DriverDashboard() {
                           <p className="text-xs mt-1 opacity-80">Bekleme süresi normalden uzun olabilir.</p>
                         </div>
                       </div>
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        Yüksek yoğunluk (%{selectedStation.mockLoad}) nedeniyle size en yakın ve daha müsait olan şu istasyonu öneriyoruz:
-                      </p>
+                      
+                      {recommendation ? (
+                        <>
+                          <p className="text-xs text-slate-400 leading-relaxed mb-3">
+                            Yüksek yoğunluk (%{selectedStation.mockLoad}) nedeniyle size daha müsait olan şu istasyonu öneriyoruz:
+                          </p>
+                          <div
+                            onClick={() => {
+                              handleStationSelect(recommendation);
+                              // Force open the modal for the new station so the user sees details immediately
+                              setTimeout(() => setIsDetailsOpen(true), 50);
+                            }}
+                            className="group relative cursor-pointer overflow-hidden rounded-xl border border-slate-600 bg-slate-800/80 p-3 transition-all hover:border-green-500/50 hover:bg-slate-800 hover:shadow-lg hover:shadow-green-900/20"
+                          >
+                            {/* Hover Gradient Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                            
+                            <div className="relative flex items-center gap-3">
+                              {/* Icon Box */}
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-700 text-green-400 ring-1 ring-white/10 transition-colors group-hover:bg-green-500 group-hover:text-white">
+                                <MapPin className="h-5 w-5" />
+                              </div>
+
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <h4 className="font-bold text-slate-200 group-hover:text-white text-sm leading-tight line-clamp-2">
+                                    {recommendation.name}
+                                  </h4>
+                                  <span className="shrink-0 inline-flex items-center justify-center rounded-full bg-green-500/20 px-2 py-1 text-[10px] font-bold text-green-400 ring-1 ring-green-500/40">
+                                    %{recommendation.mockLoad}
+                                  </span>
+                                </div>
+                                
+                                <div className="mt-1.5 flex items-center gap-3">
+                                  <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                                    <Zap className="h-3 w-3 text-yellow-400" />
+                                    <span>Hızlı Şarj</span>
+                                  </div>
+                                  <div className="h-0.5 w-0.5 rounded-full bg-slate-600" />
+                                  <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                                    <Navigation className="h-3 w-3 text-blue-400" />
+                                    <span>Alternatif</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Arrow Icon */}
+                              <div className="self-center text-slate-600 transition-transform group-hover:translate-x-1 group-hover:text-green-400">
+                                <ArrowRight className="h-4 w-4" />
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-xs text-slate-400">Şu an için daha iyi bir alternatif bulunamadı.</p>
+                      )}
                     </div>
                   ) : slots.find(s => s.isGreen) ? (
                     // Normal AI Recommendation
@@ -452,48 +504,7 @@ export default function DriverDashboard() {
                   )}
                 </div>
 
-                {/* Alternative Stations - ONLY if High Density */}
-                {(selectedStation.mockLoad || 0) >= 70 && (
-                  <div className="flex-1 flex flex-col min-h-0 animate-in fade-in slide-in-from-right-4 duration-500">
-                    <div className="mb-3 flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Alternatif Öneri</h4>
-                      <span className="text-[10px] font-bold bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">En Yakın</span>
-                    </div>
-                    
-                    <div className="space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700">
-                      {/* Only 1 Best Alternative */}
-                      <div
-                        onClick={() => {
-                          // Find the station with ID 105 (mocked in UI but let's try to find it in state)
-                          // If not found, we can just mock the switch for the hackathon demo
-                          const altStation = stations.find(s => s.id === 105) || stations.find(s => s.id !== selectedStation.id);
-                          if (altStation) {
-                            handleStationSelect(altStation);
-                            // Force open the modal for the new station so the user sees details immediately
-                            setTimeout(() => setIsDetailsOpen(true), 50);
-                          }
-                        }}
-                        className="group flex cursor-pointer items-center gap-4 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 transition-all hover:border-green-500/50 hover:bg-slate-800 hover:shadow-lg hover:shadow-green-900/20"
-                      >
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-700 text-slate-400 transition-colors group-hover:bg-green-600 group-hover:text-white">
-                          <MapPin className="h-6 w-6" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="font-bold text-slate-200 group-hover:text-white truncate">ZES Point #105</div>
-                            <span className="text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/20">
-                              %35
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 text-xs text-slate-500 group-hover:text-slate-400">
-                            <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> 1.2 km</span>
-                            <span className="text-blue-400 font-medium">Daha Hızlı</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+
               </div>
             </div>
           </div>
