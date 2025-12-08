@@ -14,9 +14,11 @@ html, body {
 }
 
 body {
-	background-color: #1e293b; /* slate-800 - Lighter Navy */
+	background-color: #0f172a; /* slate-900 */
+	color: #f8fafc; /* slate-50 */
 	background-image: var(--eco-grid);
-	font-feature-settings: "ss01";
+	font-feature-settings: "ss01", "cv01", "cv11";
+	-webkit-font-smoothing: antialiased;
 }
 
 /* Utility helpers (no @apply with opacity syntax to avoid Tailwind parse errors) */
@@ -24,20 +26,20 @@ body {
 
 /* Glass effect helper classes using raw CSS (optional) */
 .glass-soft {
-	background-color: rgba(30, 41, 59, 0.60); /* slate-800 base */
+	background-color: rgba(15, 23, 42, 0.60); /* slate-900 base */
 	backdrop-filter: blur(12px);
-	border: 1px solid rgba(71, 85, 105, 0.7); /* slate-600 border */
+	border: 1px solid rgba(51, 65, 85, 0.5); /* slate-700 border */
 	box-shadow: 0 4px 24px -4px rgba(0,0,0,0.4);
 }
 .glass-intense {
-	background-color: rgba(30, 41, 59, 0.72); /* slate-800 base */
+	background-color: rgba(15, 23, 42, 0.8); /* slate-900 base */
 	backdrop-filter: blur(18px);
-	border: 1px solid rgba(100, 116, 139, 0.65); /* slate-500 border */
+	border: 1px solid rgba(71, 85, 105, 0.5); /* slate-600 border */
 	box-shadow: 0 6px 32px -6px rgba(0,0,0,0.55);
 }
 
 /* Scrollbar minimal styling */
-*::-webkit-scrollbar { width: 10px; }
-*::-webkit-scrollbar-track { background: #1e293b; }
-*::-webkit-scrollbar-thumb { background: #475569; border-radius: 6px; }
-*::-webkit-scrollbar-thumb:hover { background: #64748b; }
+*::-webkit-scrollbar { width: 6px; }
+*::-webkit-scrollbar-track { background: #0f172a; }
+*::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
+*::-webkit-scrollbar-thumb:hover { background: #475569; }

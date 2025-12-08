@@ -169,6 +169,12 @@ export default function DriverWalletPage() {
 											<p className="mt-2 text-xs text-slate-400 flex items-center gap-1">
 												<Sparkles className="h-3 w-3 text-green-400" /> {totalGreenSessions} yeşil şarj işlemi
 											</p>
+											<div className="mt-4 pt-4 border-t border-slate-700/50">
+												<p className="text-xs text-slate-500 flex items-center gap-2">
+													<span className="text-green-500">≈</span>
+													yıllık {(user.co2Saved / 20).toFixed(2)} ağaç emisyon temizliği
+												</p>
+											</div>
 										</div>
 
 										<div className="group relative overflow-hidden rounded-3xl border border-slate-700 bg-slate-800/50 p-8 transition hover:border-blue-500/30">

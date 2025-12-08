@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Filter, MapPin, Zap, Battery, MoreVertical, Edit, Trash, List, Map as MapIcon } from "lucide-react";
-import Map from "@/components/Map";
+import dynamic from "next/dynamic";
+const Map = dynamic(() => import("@/components/Map"), { ssr: false });
 
 type Station = {
   id: number;

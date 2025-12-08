@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, Fragment } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -35,11 +35,21 @@ export type StationMarker = {
 type MapProps = {
   stations: StationMarker[];
   onSelect: (station: StationMarker) => void;
+  onMapClick?: () => void;
   initialCenter?: LatLngExpression;
   zoom?: number;
 };
 
-export default function Map({ stations, onSelect, initialCenter, zoom = 12 }: MapProps) {
+function MapEvents({ onMapClick }: { onMapClick?: () => void }) {
+  useMapEvents({
+    click: () => {
+      onMapClick?.();
+    },
+  });
+  return null;
+}
+
+export default function Map({ stations, onSelect, onMapClick, initialCenter, zoom = 12 }: MapProps) {
   useEffect(() => {
     patchLeafletIcons();
   }, []);
@@ -49,6 +59,7 @@ export default function Map({ stations, onSelect, initialCenter, zoom = 12 }: Ma
   return (
     <div className="h-full w-full overflow-hidden rounded-3xl border border-slate-700 bg-slate-800">
       <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
+        <MapEvents onMapClick={onMapClick} />
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -69,17 +80,17 @@ export default function Map({ stations, onSelect, initialCenter, zoom = 12 }: Ma
           }
 
           const isHighDensity = status === "RED";
-          // Soft radial glow for density
-          const glowColor = status === "RED" ? "rgba(239, 68, 68, 0.4)" : status === "YELLOW" ? "rgba(234, 179, 8, 0.4)" : "rgba(34, 197, 94, 0.4)";
+          // Softer radial glow for density
+          const glowColor = status === "RED" ? "rgba(239, 68, 68, 0.25)" : status === "YELLOW" ? "rgba(234, 179, 8, 0.25)" : "rgba(34, 197, 94, 0.25)";
           
           const customIcon = L.divIcon({
             className: "custom-station-icon bg-transparent border-none",
             html: `
-              <div class="relative flex items-center justify-center w-16 h-16 -ml-4 -mt-4">
-                <div class="absolute inset-0 rounded-full blur-md" style="background: ${glowColor}; transform: scale(1.5);"></div>
-                ${isHighDensity ? `<div class="absolute inset-0 rounded-full ${colorClass} animate-ping opacity-20"></div>` : ""}
-                <div class="relative w-8 h-8 rounded-full border-2 border-white ${colorClass} ${shadowClass} shadow-lg flex items-center justify-center z-10">
-                   <span class="text-[10px] font-bold text-white">${load}%</span>
+              <div class="relative flex items-center justify-center w-24 h-24 -ml-8 -mt-8">
+                <div class="absolute inset-0 rounded-full blur-xl transition-all duration-1000" style="background: ${glowColor}; transform: scale(1.2);"></div>
+                ${isHighDensity ? `<div class="absolute inset-0 rounded-full ${colorClass} animate-ping opacity-10 duration-[3000ms]"></div>` : ""}
+                <div class="relative w-9 h-9 rounded-full border-2 border-white ${colorClass} ${shadowClass} shadow-xl flex items-center justify-center z-10 transition-transform hover:scale-110">
+                   <span class="text-[10px] font-bold text-white drop-shadow-md">${load}%</span>
                 </div>
               </div>
             `,

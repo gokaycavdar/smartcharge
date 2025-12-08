@@ -31,6 +31,7 @@ type ToastState = {
 export default function DriverDashboard() {
   const [stations, setStations] = useState<StationMarker[]>([]);
   const [selectedStation, setSelectedStation] = useState<StationMarker | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
@@ -134,9 +135,15 @@ export default function DriverDashboard() {
 
   const handleStationSelect = useCallback((station: StationMarker) => {
     setSelectedStation(station);
+    setIsDetailsOpen(false);
     setSlots([]);
     void fetchSlots(station);
   }, [fetchSlots]);
+
+  const handleMapClick = useCallback(() => {
+    setSelectedStation(null);
+    setIsDetailsOpen(false);
+  }, []);
 
   // Basic DOM confetti spawner (lightweight, no external deps)
   const fireConfetti = useCallback(() => {
@@ -223,6 +230,18 @@ export default function DriverDashboard() {
     return `${selectedStation.name}`;
   }, [selectedStation]);
 
+  // Calculate a quick "Best Slot" for the small card preview
+  const bestSlotPreview = useMemo(() => {
+    if (!selectedStation) return null;
+    // Deterministic mock based on station ID
+    const startHour = 10 + (selectedStation.id % 8); // 10:00 to 17:00
+    const xp = 50 + (selectedStation.id % 4) * 10; // 50, 60, 70, 80 XP
+    return {
+      time: `${startHour}:00 - ${startHour + 2}:00`,
+      xp
+    };
+  }, [selectedStation]);
+
   const recommendation = useMemo(() => {
     if (!selectedStation || !stations.length) return null;
     
@@ -248,10 +267,96 @@ export default function DriverDashboard() {
     <div className="relative min-h-screen bg-slate-700">
       <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-800 to-blue-900/40" />
       <div className="relative z-10 h-screen w-full">
-        <Map stations={stations} onSelect={handleStationSelect} />
+        <Map stations={stations} onSelect={handleStationSelect} onMapClick={handleMapClick} />
       </div>
 
-      {selectedStation ? (
+      {/* Small Station Preview Card */}
+      {selectedStation && !isDetailsOpen && (
+        <div className="absolute bottom-8 left-1/2 z-40 w-full max-w-sm -translate-x-1/2 px-4 animate-in slide-in-from-bottom-4 duration-300">
+          <div className="relative overflow-hidden rounded-3xl border border-slate-600 bg-slate-800/95 p-5 shadow-2xl backdrop-blur-xl ring-1 ring-white/10">
+            {/* Close Button */}
+            <button 
+              onClick={() => setSelectedStation(null)}
+              className="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Header */}
+            <div className="mb-4 flex items-start gap-4">
+              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-lg ${
+                selectedStation.mockStatus === "RED" ? "border-red-500/30 bg-red-500/20 text-red-400" :
+                selectedStation.mockStatus === "YELLOW" ? "border-yellow-500/30 bg-yellow-500/20 text-yellow-400" :
+                "border-green-500/30 bg-green-500/20 text-green-400"
+              }`}>
+                <Zap className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white leading-tight">{selectedStation.name}</h3>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ${
+                    selectedStation.mockStatus === "RED" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                    selectedStation.mockStatus === "YELLOW" ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" :
+                    "bg-green-500/10 text-green-400 border-green-500/20"
+                  }`}>
+                    {selectedStation.mockStatus === "RED" ? "Yüksek" : selectedStation.mockStatus === "YELLOW" ? "Orta" : "Düşük"} Yoğunluk
+                  </span>
+                  <span className="text-xs text-slate-400">%{selectedStation.mockLoad || 0} Dolu</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Mini Grid */}
+            <div className="mb-4 grid grid-cols-3 gap-2">
+              <div className="rounded-xl bg-slate-900/50 p-2 text-center border border-slate-700/50">
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider">Güç</div>
+                <div className="font-bold text-white">{selectedStation.id % 2 === 0 ? "120 kW" : "180 kW"}</div>
+              </div>
+              <div className="rounded-xl bg-slate-900/50 p-2 text-center border border-slate-700/50">
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider">Mesafe</div>
+                <div className="font-bold text-white">{(1.2 + (selectedStation.id % 5) * 0.4).toFixed(1)} km</div>
+              </div>
+              <div className="rounded-xl bg-slate-900/50 p-2 text-center border border-slate-700/50">
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider">Fiyat</div>
+                <div className="font-bold text-white">{selectedStation.price} ₺</div>
+              </div>
+            </div>
+
+            {/* AI Suggestion */}
+            {bestSlotPreview && (
+              <div className="mb-4 rounded-xl border border-purple-500/30 bg-gradient-to-r from-purple-900/20 to-blue-900/20 p-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-purple-300 mb-1">
+                  <Sparkles className="h-3 w-3" /> AI Önerisi
+                </div>
+                <p className="text-xs text-slate-300">
+                  En verimli saat: <span className="text-white font-bold">{bestSlotPreview.time}</span> <span className="text-yellow-400 font-bold">(+{bestSlotPreview.xp} XP)</span>
+                </p>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                onClick={() => setIsDetailsOpen(true)}
+                className="rounded-xl bg-slate-700 py-3 text-sm font-bold text-white hover:bg-slate-600 transition-colors"
+              >
+                Detayları Gör
+              </button>
+              <button 
+                onClick={() => {
+                  setIsDetailsOpen(true);
+                  // Optional: We could auto-scroll or highlight the best slot here
+                }}
+                className="rounded-xl bg-blue-600 py-3 text-sm font-bold text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-600/20"
+              >
+                Hızlı Rezerve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedStation && isDetailsOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-8 backdrop-blur-md animate-in fade-in duration-200">
           <div className="relative flex h-[85vh] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-slate-600 bg-slate-800/95 text-white shadow-2xl ring-1 ring-white/10">
             
@@ -279,7 +384,7 @@ export default function DriverDashboard() {
               </div>
               <button
                 className="rounded-full bg-slate-800 p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
-                onClick={() => setSelectedStation(null)}
+                onClick={() => setIsDetailsOpen(false)}
                 type="button"
               >
                 <X className="h-6 w-6" />
@@ -371,17 +476,32 @@ export default function DriverDashboard() {
               </div>
 
               {/* Right Panel: AI & Alternatives */}
-              <div className="w-80 border-l border-slate-700 bg-slate-900/50 p-6 backdrop-blur-sm flex flex-col h-full overflow-y-auto">
+              <div className="w-80 border-l border-slate-700 bg-slate-900/50 p-6 backdrop-blur-sm flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600">
                 {/* AI Insight */}
-                <div className="mb-6 rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/20 to-blue-900/20 p-5 shadow-lg shadow-purple-900/10 shrink-0">
-                  <div className="mb-3 flex items-center gap-2 text-purple-400">
+                <div className="mb-6 rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/20 to-blue-900/20 p-6 shadow-lg shadow-purple-900/10 shrink-0">
+                  <div className="mb-4 flex items-center gap-2 text-purple-400">
                     <Sparkles className="h-5 w-5 animate-pulse" />
-                    <span className="text-sm font-bold tracking-wide">AI SMART PICK</span>
+                    <span className="text-sm font-bold tracking-wide uppercase">AI Smart Pick</span>
                   </div>
                   
-                  {slots.find(s => s.isGreen) ? (
+                  {(selectedStation.mockLoad || 0) >= 70 ? (
+                    // High Density Warning
+                    <div className="animate-in fade-in duration-300">
+                      <div className="mb-4 flex items-start gap-3 text-orange-200 bg-orange-500/10 p-3 rounded-xl border border-orange-500/20">
+                        <Megaphone className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-bold text-orange-400">Bu istasyon şu an çok yoğun.</p>
+                          <p className="text-xs mt-1 opacity-80">Bekleme süresi normalden uzun olabilir.</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Yüksek yoğunluk (%{selectedStation.mockLoad}) nedeniyle size en yakın ve daha müsait olan şu istasyonu öneriyoruz:
+                      </p>
+                    </div>
+                  ) : slots.find(s => s.isGreen) ? (
+                    // Normal AI Recommendation
                     <>
-                      <p className="mb-3 text-sm leading-relaxed text-slate-300">
+                      <p className="mb-4 text-sm leading-relaxed text-slate-300">
                         Şu an bölgede yoğunluk <span className="text-white font-medium">düşük (%{selectedStation.mockLoad || 24})</span>. 
                         <br/><br/>
                         Saat <span className="text-green-400 font-bold">{slots.find(s => s.isGreen)?.label.split(" - ")[0]}</span> için Eco Slot rezervasyonu yaparsan <span className="text-yellow-400 font-bold">{slots.find(s => s.isGreen)?.coins} Coin</span> kazanabilirsin.
@@ -391,22 +511,10 @@ export default function DriverDashboard() {
                           const s = slots.find(s => s.isGreen);
                           if(s) handleBooking(s);
                         }}
-                        className="w-full rounded-lg bg-purple-600 py-2 text-xs font-bold text-white transition hover:bg-purple-500 shadow-lg shadow-purple-600/20"
+                        className="w-full rounded-xl bg-purple-600 py-3 text-sm font-bold text-white transition hover:bg-purple-500 shadow-lg shadow-purple-600/20 active:scale-95"
                       >
                         Bu Saati Rezerve Et
                       </button>
-
-                      {/* Mock Alternative AI Pick */}
-                      <div className="mt-4 pt-4 border-t border-white/10">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-slate-400">Alternatif Öneri</span>
-                          <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded">Daha Hızlı</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs text-slate-300">
-                          <span>16:00 - 18:00</span>
-                          <span className="text-white font-medium">120kW DC</span>
-                        </div>
-                      </div>
                     </>
                   ) : (
                     <p className="text-sm text-slate-400">Şu an için özel bir öneri bulunmuyor.</p>
@@ -414,40 +522,42 @@ export default function DriverDashboard() {
                 </div>
 
                 {/* Alternative Stations - ONLY if High Density */}
-                {(selectedStation.mockLoad || 0) > 70 && (
+                {(selectedStation.mockLoad || 0) >= 70 && (
                   <div className="flex-1 flex flex-col min-h-0 animate-in fade-in slide-in-from-right-4 duration-500">
-                    <div className="mb-4 flex items-center gap-2 text-orange-400">
-                      <Megaphone className="h-4 w-4" />
-                      <h4 className="text-sm font-medium uppercase tracking-wider">Yoğunluk Uyarısı</h4>
+                    <div className="mb-3 flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Alternatif Öneri</h4>
+                      <span className="text-[10px] font-bold bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full">En Yakın</span>
                     </div>
-                    <p className="mb-4 text-xs text-slate-400">
-                      Bu istasyon şu an çok yoğun (%{selectedStation.mockLoad}). Daha hızlı şarj için bu alternatifleri değerlendirebilirsin:
-                    </p>
                     
-                    <div className="space-y-3">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div
-                          key={i}
-                          className="group flex cursor-pointer items-center gap-3 rounded-xl border border-slate-800 bg-slate-800/30 p-3 transition-all hover:border-green-500/30 hover:bg-slate-800"
-                        >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-700 text-slate-400 transition-colors group-hover:bg-green-600 group-hover:text-white">
-                            <MapPin className="h-5 w-5" />
+                    <div className="space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700">
+                      {/* Only 1 Best Alternative */}
+                      <div
+                        onClick={() => {
+                          // Find the station with ID 105 (mocked in UI but let's try to find it in state)
+                          // If not found, we can just mock the switch for the hackathon demo
+                          const altStation = stations.find(s => s.id === 105) || stations.find(s => s.id !== selectedStation.id);
+                          if (altStation) {
+                            handleStationSelect(altStation);
+                          }
+                        }}
+                        className="group flex cursor-pointer items-center gap-4 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 transition-all hover:border-green-500/50 hover:bg-slate-800 hover:shadow-lg hover:shadow-green-900/20"
+                      >
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-700 text-slate-400 transition-colors group-hover:bg-green-600 group-hover:text-white">
+                          <MapPin className="h-6 w-6" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="font-bold text-slate-200 group-hover:text-white truncate">ZES Point #105</div>
+                            <span className="text-[10px] font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/20">
+                              %35
+                            </span>
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <div className="font-medium text-slate-200 group-hover:text-white">ZES Point #{100 + i}</div>
-                              <span className="text-[10px] font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">
-                                %{30 + i * 5}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-slate-500 group-hover:text-slate-400 mt-1">
-                              <span>{(0.8 + i * 0.4).toFixed(1)} km</span>
-                              <span>•</span>
-                              <span className="text-blue-400">Daha Uygun</span>
-                            </div>
+                          <div className="flex items-center gap-3 text-xs text-slate-500 group-hover:text-slate-400">
+                            <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> 1.2 km</span>
+                            <span className="text-blue-400 font-medium">Daha Hızlı</span>
                           </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
                   </div>
                 )}

@@ -28,9 +28,16 @@ export default function AppointmentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeChargingId, setActiveChargingId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const pendingReservations = reservations.filter(r => r.status === "PENDING");
   const completedReservations = reservations.filter(r => r.status === "COMPLETED");
+  const cancelledReservations = reservations.filter(r => r.status === "CANCELLED");
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const loadReservations = useCallback(async () => {
     const userId = typeof window !== "undefined" ? localStorage.getItem("ecocharge:userId") : null;
@@ -63,15 +70,59 @@ export default function AppointmentsPage() {
     setActiveChargingId(id);
   };
 
-  const handleSimulationComplete = () => {
-    loadReservations();
-    setActiveChargingId(null);
+  const handleCancel = async (id: number) => {
+    try {
+      const res = await fetch(`/api/reservations/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "CANCELLED" }),
+      });
+      if (!res.ok) throw new Error("İptal başarısız");
+      
+      setReservations(prev => prev.map(r => r.id === id ? { ...r, status: "CANCELLED" } : r));
+      showToast("Randevu iptal edildi.", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("İptal işlemi başarısız.", "error");
+    }
+  };
+
+  const handleSimulationComplete = async (earnedCoins: number) => {
+    if (!activeChargingId) return;
+    
+    try {
+      const res = await fetch(`/api/reservations/${activeChargingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "COMPLETED" }),
+      });
+      
+      if (!res.ok) throw new Error("Tamamlama başarısız");
+
+      showToast(`Tebrikler! Rezervasyon tamamlandı, +${earnedCoins} Coin kazandın.`, "success");
+      loadReservations();
+    } catch (error) {
+      console.error(error);
+      showToast("İşlem kaydedilemedi.", "error");
+    } finally {
+      setActiveChargingId(null);
+    }
   };
 
   return (
     <main className="min-h-screen bg-slate-900 text-white relative overflow-hidden font-sans">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-900 to-slate-900" />
       
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-4 fade-in duration-300 ${
+          toast.type === "success" ? "bg-green-500 text-black" : "bg-red-500 text-white"
+        }`}>
+          {toast.type === "success" ? <CheckCircle2 className="h-5 w-5" /> : <X className="h-5 w-5" />}
+          <span className="font-bold text-sm">{toast.message}</span>
+        </div>
+      )}
+
       <div className="relative z-10 mx-auto max-w-4xl px-6 py-12">
         <header className="flex items-center justify-between mb-12">
           <div>
@@ -169,6 +220,12 @@ export default function AppointmentsPage() {
                         
                         <div className="flex items-center gap-3 sm:self-center">
                           <button
+                            onClick={() => handleCancel(res.id)}
+                            className="px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white text-sm font-medium transition border border-red-500/20"
+                          >
+                            İptal Et
+                          </button>
+                          <button
                             onClick={() => handleStartCharging(res.id)}
                             className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-sm font-bold transition shadow-lg shadow-blue-600/25 active:scale-95 ring-1 ring-blue-400/20"
                           >
@@ -234,6 +291,41 @@ export default function AppointmentsPage() {
                 </div>
               </section>
             )}
+
+            {/* CANCELLED RESERVATIONS */}
+            {cancelledReservations.length > 0 && (
+              <section>
+                <h2 className="mb-4 text-lg font-semibold text-slate-500 flex items-center gap-2">
+                  <X className="h-5 w-5" />
+                  İptal Edilenler
+                </h2>
+                <div className="grid gap-4 opacity-50">
+                  {cancelledReservations.map((res) => (
+                    <div 
+                      key={res.id} 
+                      className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/30 p-6"
+                    >
+                      <div className="flex items-center justify-between gap-6">
+                        <div className="flex items-center gap-5">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-600">
+                            <X className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-slate-500">{res.station.name}</h3>
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <span>{new Date(res.date).toLocaleDateString('tr-TR')}</span>
+                              <span>•</span>
+                              <span>{res.hour}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-slate-600 uppercase tracking-wider border border-slate-700 px-2 py-1 rounded">İptal</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>
@@ -243,18 +335,17 @@ export default function AppointmentsPage() {
         <ChargingSimulation 
           reservation={reservations.find(r => r.id === activeChargingId)!} 
           onClose={() => setActiveChargingId(null)} 
-          onComplete={handleSimulationComplete}
+          onComplete={(coins) => handleSimulationComplete(coins)}
         />
       )}
     </main>
   );
 }
 
-function ChargingSimulation({ reservation, onClose, onComplete }: { reservation: Reservation; onClose: () => void; onComplete: () => void }) {
+function ChargingSimulation({ reservation, onClose, onComplete }: { reservation: Reservation; onClose: () => void; onComplete: (coins: number) => void }) {
   const [progress, setProgress] = useState(0);
   const [stats, setStats] = useState({ energy: 0, coins: 0, co2: 0 });
   const [completed, setCompleted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -276,33 +367,6 @@ function ChargingSimulation({ reservation, onClose, onComplete }: { reservation:
     
     return () => clearInterval(interval);
   }, [reservation.isGreen]);
-
-  const handleComplete = async () => {
-    setIsSubmitting(true);
-    try {
-      const res = await fetch(`/api/reservations/${reservation.id}/complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "COMPLETED",
-          earnedCoins: 50,
-          earnedXp: 50
-        })
-      });
-      
-      if (res.ok) {
-        onComplete();
-      } else {
-        console.error("Failed to complete reservation");
-        onClose();
-      }
-    } catch (error) {
-      console.error("Error completing reservation", error);
-      onClose();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
@@ -371,11 +435,10 @@ function ChargingSimulation({ reservation, onClose, onComplete }: { reservation:
 
           {completed ? (
             <button 
-              onClick={handleComplete}
-              disabled={isSubmitting}
-              className="w-full py-4 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-lg transition shadow-lg shadow-green-500/25 animate-in slide-in-from-bottom-4 disabled:opacity-50"
+              onClick={() => onComplete(50)}
+              className="w-full py-4 rounded-xl bg-green-500 hover:bg-green-400 text-black font-bold text-lg transition shadow-lg shadow-green-500/25 animate-in slide-in-from-bottom-4"
             >
-              {isSubmitting ? "İşleniyor..." : "Ödülleri Topla"}
+              Ödülleri Topla
             </button>
           ) : (
             <p className="text-xs text-slate-500 animate-pulse">
