@@ -95,7 +95,7 @@ export default function AuthLandingPage() {
 							<span className="text-gradient-eco">SmartCharge AI:</span> Smart Charging, Less Carbon.
 						</h1>
 						<p className="mt-5 max-w-2xl text-base text-slate-100">
-							AI destekli yeşil slot önerileri, anlık istasyon içgörüleri ve oyunlaştırılmış ödül sistemiyle elektrikli
+							AI destekli yeşil slot önerileri, anlık istasyon bilgileri ve oyunlaştırılmış ödül sistemiyle elektrikli
 							araç şarj deneyimini yeniden düşün. 24 saatlik sprint MVP.
 						</p>
 					</header>

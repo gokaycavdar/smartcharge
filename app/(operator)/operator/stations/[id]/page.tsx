@@ -118,27 +118,27 @@ export default function EditStationPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+      <div className="min-h-screen bg-primary-bg flex items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent-primary border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="min-h-screen bg-primary-bg text-primary font-sans">
       {/* Header */}
-      <header className="border-b border-slate-200 bg-white/50 backdrop-blur-md sticky top-0 z-10">
+      <header className="border-b border-white/10 bg-surface-1/50 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link 
               href="/operator/stations" 
-              className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition"
+              className="p-2 rounded-lg hover:bg-white/5 text-text-secondary hover:text-white transition"
             >
               <ArrowLeft size={20} />
             </Link>
-            <h1 className="text-lg font-semibold text-slate-900">İstasyonu Düzenle</h1>
+            <h1 className="text-lg font-semibold text-white">İstasyonu Düzenle</h1>
           </div>
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-text-secondary">
             Adım {currentStep} / {STEPS.length}
           </div>
         </div>
@@ -148,9 +148,9 @@ export default function EditStationPage() {
         {/* Progress Steps */}
         <div className="mb-10">
           <div className="flex items-center justify-between relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-200 -z-10"></div>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-surface-2 -z-10"></div>
             <div 
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-blue-600 transition-all duration-500 -z-10"
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-accent-primary transition-all duration-500 -z-10"
               style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
             ></div>
             
@@ -159,19 +159,19 @@ export default function EditStationPage() {
               const isCompleted = step.id < currentStep;
               
               return (
-                <div key={step.id} className="flex flex-col items-center gap-2 bg-slate-50 px-2">
+                <div key={step.id} className="flex flex-col items-center gap-2 bg-primary-bg px-2">
                   <div 
                     className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
                       isActive 
-                        ? "border-blue-500 bg-blue-50 text-blue-600" 
+                        ? "border-accent-primary bg-accent-primary/10 text-accent-primary" 
                         : isCompleted 
-                          ? "border-blue-500 bg-blue-600 text-white" 
-                          : "border-slate-300 bg-white text-slate-400"
+                          ? "border-accent-primary bg-accent-primary text-white" 
+                          : "border-surface-2 bg-surface-1 text-text-tertiary"
                     }`}
                   >
                     {isCompleted ? <Check size={18} /> : <step.icon size={18} />}
                   </div>
-                  <span className={`text-xs font-medium ${isActive ? "text-blue-600" : "text-slate-500"}`}>
+                  <span className={`text-xs font-medium ${isActive ? "text-accent-primary" : "text-text-tertiary"}`}>
                     {step.title}
                   </span>
                 </div>
@@ -181,17 +181,17 @@ export default function EditStationPage() {
         </div>
 
         {/* Form Content */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-lg shadow-slate-200/50">
+        <div className="glass-card rounded-2xl p-8">
           {currentStep === 1 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">İstasyon Özellikleri</h2>
+              <h2 className="text-xl font-bold text-white mb-6">İstasyon Özellikleri</h2>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">İstasyon Adı</label>
+                <label className="text-sm font-medium text-text-secondary">İstasyon Adı</label>
                 <input 
                   type="text" 
                   placeholder="Örn: Alsancak Hızlı Şarj" 
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+                  className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white placeholder-text-tertiary focus:border-accent-primary focus:ring-1 focus:ring-accent-primary outline-none transition"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                 />
@@ -199,15 +199,15 @@ export default function EditStationPage() {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Şarj Tipi</label>
+                  <label className="text-sm font-medium text-text-secondary">Şarj Tipi</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button 
                       type="button"
                       onClick={() => setFormData({...formData, type: "AC"})}
                       className={`p-3 rounded-xl border text-center transition ${
                         formData.type === "AC" 
-                          ? "border-blue-500 bg-blue-50 text-blue-600" 
-                          : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
+                          ? "border-accent-primary bg-accent-primary/10 text-accent-primary" 
+                          : "border-white/10 bg-surface-2 text-text-secondary hover:bg-surface-3"
                       }`}
                     >
                       AC
@@ -217,8 +217,8 @@ export default function EditStationPage() {
                       onClick={() => setFormData({...formData, type: "DC"})}
                       className={`p-3 rounded-xl border text-center transition ${
                         formData.type === "DC" 
-                          ? "border-blue-500 bg-blue-50 text-blue-600" 
-                          : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
+                          ? "border-accent-primary bg-accent-primary/10 text-accent-primary" 
+                          : "border-white/10 bg-surface-2 text-text-secondary hover:bg-surface-3"
                       }`}
                     >
                       DC
@@ -227,10 +227,10 @@ export default function EditStationPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Güç (kW)</label>
+                  <label className="text-sm font-medium text-text-secondary">Güç (kW)</label>
                   <input 
                     type="number" 
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+                    className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white placeholder-text-tertiary focus:border-accent-primary focus:ring-1 focus:ring-accent-primary outline-none transition"
                     value={formData.power}
                     onChange={(e) => setFormData({...formData, power: Number(e.target.value)})}
                   />
@@ -238,9 +238,9 @@ export default function EditStationPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Soket Tipi</label>
+                <label className="text-sm font-medium text-text-secondary">Soket Tipi</label>
                 <select 
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition appearance-none"
+                  className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white focus:border-accent-primary focus:ring-1 focus:ring-accent-primary outline-none transition appearance-none"
                   value={formData.connectorType}
                   onChange={(e) => setFormData({...formData, connectorType: e.target.value})}
                 >
@@ -254,9 +254,9 @@ export default function EditStationPage() {
 
           {currentStep === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Konum Bilgileri</h2>
+              <h2 className="text-xl font-bold text-white mb-6">Konum Bilgileri</h2>
               
-              <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 h-48 flex items-center justify-center text-slate-400 mb-4">
+              <div className="bg-surface-2 rounded-xl border border-white/10 p-4 h-48 flex items-center justify-center text-text-tertiary mb-4">
                 <div className="text-center">
                   <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">Harita Seçimi (Simülasyon)</p>
@@ -265,21 +265,21 @@ export default function EditStationPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Enlem</label>
+                  <label className="text-sm font-medium text-text-secondary">Enlem</label>
                   <input 
                     type="number" 
                     step="0.0001"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 placeholder-slate-400 focus:border-blue-500 outline-none transition"
+                    className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white placeholder-text-tertiary focus:border-accent-primary outline-none transition"
                     value={formData.latitude}
                     onChange={(e) => setFormData({...formData, latitude: Number(e.target.value)})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Boylam</label>
+                  <label className="text-sm font-medium text-text-secondary">Boylam</label>
                   <input 
                     type="number" 
                     step="0.0001"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 placeholder-slate-400 focus:border-blue-500 outline-none transition"
+                    className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white placeholder-text-tertiary focus:border-accent-primary outline-none transition"
                     value={formData.longitude}
                     onChange={(e) => setFormData({...formData, longitude: Number(e.target.value)})}
                   />
@@ -287,11 +287,11 @@ export default function EditStationPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Açık Adres</label>
+                <label className="text-sm font-medium text-text-secondary">Açık Adres</label>
                 <textarea 
                   rows={3}
                   placeholder="Mahalle, Cadde, No..." 
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 placeholder-slate-400 focus:border-blue-500 outline-none transition resize-none"
+                  className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white placeholder-text-tertiary focus:border-accent-primary outline-none transition resize-none"
                   value={formData.address}
                   onChange={(e) => setFormData({...formData, address: e.target.value})}
                 />
@@ -301,33 +301,33 @@ export default function EditStationPage() {
 
           {currentStep === 3 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Fiyatlandırma</h2>
+              <h2 className="text-xl font-bold text-white mb-6">Fiyatlandırma</h2>
               
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 mb-6">
+              <div className="p-6 rounded-2xl bg-accent-primary/10 border border-accent-primary/20 mb-6">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-blue-100 text-blue-600">
+                  <div className="p-3 rounded-full bg-accent-primary/20 text-accent-primary">
                     <DollarSign size={24} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900">Birim Fiyat</h3>
-                    <p className="text-sm text-slate-500">kWh başına ücretlendirme</p>
+                    <h3 className="font-semibold text-white">Birim Fiyat</h3>
+                    <p className="text-sm text-text-secondary">kWh başına ücretlendirme</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Birim Fiyat (₺/kWh)</label>
+                <label className="text-sm font-medium text-text-secondary">Birim Fiyat (₺/kWh)</label>
                 <div className="relative">
                   <input 
                     type="number" 
                     step="0.1"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 pl-12 text-slate-900 text-lg font-semibold placeholder-slate-400 focus:border-blue-500 outline-none transition"
+                    className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 pl-12 text-white text-lg font-semibold placeholder-text-tertiary focus:border-accent-primary outline-none transition"
                     value={formData.price}
                     onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
                   />
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-semibold">₺</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary font-semibold">₺</span>
                 </div>
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-xs text-text-tertiary mt-2">
                   * Bu fiyat tüm kullanıcılar için geçerli olacaktır. Kampanyalar ayrıca uygulanır.
                 </p>
               </div>
@@ -335,14 +335,14 @@ export default function EditStationPage() {
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex items-center justify-between mt-10 pt-6 border-t border-slate-100">
+          <div className="flex items-center justify-between mt-10 pt-6 border-t border-white/10">
             <button 
               onClick={handleBack}
               disabled={currentStep === 1}
               className={`px-6 py-3 rounded-xl font-medium transition ${
                 currentStep === 1 
-                  ? "text-slate-400 cursor-not-allowed" 
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                  ? "text-text-tertiary cursor-not-allowed" 
+                  : "text-text-secondary hover:bg-surface-2 hover:text-white"
               }`}
             >
               Geri
@@ -351,7 +351,7 @@ export default function EditStationPage() {
             <button 
               onClick={handleNext}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-8 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-8 py-3 rounded-xl bg-accent-primary text-white font-semibold hover:bg-accent-hover transition shadow-lg shadow-accent-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>

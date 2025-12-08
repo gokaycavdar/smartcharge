@@ -57,3 +57,29 @@ export async function GET() {
     return NextResponse.json({ error: "İstasyonlar çekilemedi" }, { status: 500 });
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { name, latitude, longitude, address, price, ownerId } = body;
+
+    const station = await prisma.station.create({
+      data: {
+        name,
+        lat: latitude,
+        lng: longitude,
+        address,
+        price,
+        ownerId,
+      },
+    });
+
+    return NextResponse.json(station);
+  } catch (error) {
+    console.error("Error creating station:", error);
+    return NextResponse.json(
+      { error: "Failed to create station" },
+      { status: 500 }
+    );
+  }
+}

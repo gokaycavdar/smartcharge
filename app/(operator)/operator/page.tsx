@@ -180,12 +180,20 @@ export default function OperatorDashboardPage() {
                 Gelir akışınızı, yük dengesini ve yeşil slot performansınızı gerçek zamanlı izleyin.
               </p>
             </div>
-            <Link
-              href="/operator/campaigns"
-              className="rounded-xl bg-accent-primary px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-primary/20 transition hover:bg-accent-hover"
-            >
-              + Kampanya Başlat
-            </Link>
+            <div className="flex gap-3">
+              <Link
+                href="/operator/stations"
+                className="rounded-xl border border-white/10 bg-surface-1 px-5 py-3 text-sm font-semibold text-white transition hover:bg-surface-2"
+              >
+                İstasyonları Yönet
+              </Link>
+              <Link
+                href="/operator/campaigns"
+                className="rounded-xl bg-accent-primary px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-primary/20 transition hover:bg-accent-hover"
+              >
+                + Kampanya Başlat
+              </Link>
+            </div>
           </header>
 
           <section className="space-y-10">
@@ -205,82 +213,7 @@ export default function OperatorDashboardPage() {
               ))}
             </div>
 
-            <div className="glass-card rounded-3xl">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 px-6 py-6">
-                <div>
-                  <h2 className="text-xl font-bold text-white">İstasyon Durumları</h2>
-                  <p className="text-xs text-text-secondary">Green slot oranı ve yük yoğunluğu simulasyona dayalıdır.</p>
-                </div>
-                <span className="rounded-full bg-surface-2 px-4 py-1 text-xs font-medium text-text-secondary">
-                  {data?.stations.length || 0} istasyon yönetiliyor
-                </span>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[720px] text-left text-sm text-text-secondary">
-                  <thead className="bg-surface-2/50 text-xs uppercase tracking-widest text-text-tertiary font-semibold">
-                    <tr>
-                      <th className="px-6 py-4">İstasyon</th>
-                      <th className="px-6 py-4">Yük</th>
-                      <th className="px-6 py-4">Fiyat</th>
-                      <th className="px-6 py-4">Rezervasyon</th>
-                      <th className="px-6 py-4">Durum</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {data?.stations.map((station) => {
-                      const statusColor =
-                        station.mockStatus === "GREEN"
-                          ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                          : station.mockStatus === "YELLOW"
-                          ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                          : "bg-red-500/10 text-red-400 border border-red-500/20";
-                      
-                      const statusText = 
-                        station.mockStatus === "GREEN" ? "Düşük Yoğunluk" :
-                        station.mockStatus === "YELLOW" ? "Orta Yoğunluk" : "Yüksek Yoğunluk";
-
-                      return (
-                        <tr key={station.id} className="hover:bg-surface-2/50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="font-bold text-white">{station.name}</div>
-                            <div className="text-xs text-text-tertiary">#{station.id.toString().padStart(3, "0")}</div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-2 w-28 rounded-full bg-surface-3">
-                                <div
-                                  className={`h-full rounded-full ${
-                                    station.mockStatus === "RED"
-                                      ? "bg-red-500"
-                                      : station.mockStatus === "YELLOW"
-                                      ? "bg-yellow-500"
-                                      : "bg-green-500"
-                                  }`}
-                                  style={{ width: `${station.mockLoad}%` }}
-                                />
-                              </div>
-                              <span className="text-xs font-medium text-text-secondary">%{station.mockLoad}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 font-mono font-medium text-white">{station.price.toFixed(2)} ₺</td>
-                          <td className="px-6 py-4 text-xs text-text-secondary">
-                            <span className="font-bold text-green-400">{station.greenReservationCount} yeşil</span> / {station.reservationCount} toplam
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${statusColor}`}>
-                              {statusText}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Analytics Section - Mocked Data */}
+            {/* Analytics Section - Moved Up */}
             <div className="grid gap-6 lg:grid-cols-3">
               {/* Stats Grid */}
               <div className="lg:col-span-2 grid gap-6 sm:grid-cols-2">
@@ -369,7 +302,7 @@ export default function OperatorDashboardPage() {
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <Lightbulb className="h-5 w-5 text-yellow-400" />
-                    <h3 className="text-lg font-bold text-white">AI İçgörüler</h3>
+                    <h3 className="text-lg font-bold text-white">AI Bilgileri</h3>
                   </div>
                   <span className="flex h-2 w-2 rounded-full bg-accent-primary animate-pulse" />
                 </div>

@@ -19,10 +19,10 @@
   --border-highlight: 56 189 248; /* Sky 400 */
 
   /* Accents - Modern Turquoise/Blue */
-  --accent-primary: 14 165 233; /* Sky 500 */
+  --accent-primary: 2 132 199; /* Sky 600 - Darker */
   --accent-secondary: 37 99 235; /* Blue 600 */
-  --accent-hover: 56 189 248;
-  --accent-glow: 14 165 233;
+  --accent-hover: 14 165 233; /* Sky 500 */
+  --accent-glow: 2 132 199;
 
   /* Status Colors */
   --status-success: 16 185 129;

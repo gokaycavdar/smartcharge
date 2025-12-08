@@ -149,7 +149,7 @@ export default function GlobalAIWidget() {
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-24 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-600/30 transition-all hover:scale-110 hover:shadow-purple-600/50 active:scale-95"
-        title="AI Global Öneriler"
+        title="Akıllı Şarj Önerileri"
       >
         <Zap className="h-7 w-7 fill-white" />
       </button>
@@ -166,7 +166,7 @@ export default function GlobalAIWidget() {
                   <Sparkles className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white tracking-tight">AI Global Öneriler</h2>
+                  <h2 className="text-2xl font-bold text-white tracking-tight">Akıllı Şarj Önerileri</h2>
                   <p className="text-sm text-slate-400">Sistem genelindeki en iyi fırsatlar senin için seçildi.</p>
                 </div>
               </div>
