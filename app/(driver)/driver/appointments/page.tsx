@@ -110,8 +110,8 @@ export default function AppointmentsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white relative overflow-hidden font-sans">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-900 to-slate-900" />
+    <main className="min-h-screen bg-primary-bg text-primary relative overflow-hidden font-sans">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent-primary/10 via-primary-bg to-primary-bg" />
       
       {/* Toast Notification */}
       {toast && (
@@ -126,12 +126,12 @@ export default function AppointmentsPage() {
       <div className="relative z-10 mx-auto max-w-4xl px-6 py-12">
         <header className="flex items-center justify-between mb-12">
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Randevularım</h1>
-            <p className="text-sm text-slate-400 mt-2">Yaklaşan şarj istasyonu rezervasyonların ve geçmişin.</p>
+            <h1 className="text-3xl font-bold text-white tracking-tight font-display">Randevularım</h1>
+            <p className="text-sm text-text-secondary mt-2">Yaklaşan şarj istasyonu rezervasyonların ve geçmişin.</p>
           </div>
           <Link
             href="/driver"
-            className="group flex items-center gap-2 px-4 py-2 rounded-full border border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white transition"
+            className="group flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-surface-1 text-text-secondary hover:bg-surface-2 hover:text-white transition"
           >
             <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" />
             <span className="text-sm font-medium">Geri Dön</span>
@@ -139,8 +139,8 @@ export default function AppointmentsPage() {
         </header>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-32 text-slate-500">
-            <Loader2 className="h-10 w-10 animate-spin text-blue-500 mb-4" />
+          <div className="flex flex-col items-center justify-center py-32 text-text-tertiary">
+            <Loader2 className="h-10 w-10 animate-spin text-accent-primary mb-4" />
             <p>Randevular yükleniyor...</p>
           </div>
         ) : error ? (
@@ -149,16 +149,16 @@ export default function AppointmentsPage() {
           </div>
         ) : reservations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-800 border border-slate-700 mb-6 shadow-xl">
-              <Calendar className="h-10 w-10 text-slate-500" />
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-surface-1 border border-white/5 mb-6 shadow-xl">
+              <Calendar className="h-10 w-10 text-text-tertiary" />
             </div>
             <h3 className="text-xl font-bold text-white">Henüz randevun yok</h3>
-            <p className="text-slate-400 mt-2 max-w-xs mx-auto leading-relaxed">
+            <p className="text-text-secondary mt-2 max-w-xs mx-auto leading-relaxed">
               Haritadan uygun bir istasyon seçip rezervasyon oluşturabilirsin.
             </p>
             <Link 
               href="/driver" 
-              className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-600/20"
+              className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-primary text-white font-semibold hover:bg-accent-hover transition shadow-lg shadow-accent-primary/20"
             >
               Haritaya Git
             </Link>
@@ -176,16 +176,16 @@ export default function AppointmentsPage() {
                   {pendingReservations.map((res) => (
                     <div 
                       key={res.id} 
-                      className="group relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-slate-800 to-slate-900 p-6 shadow-lg shadow-blue-900/20 ring-1 ring-blue-500/20 transition-all hover:shadow-blue-600/20"
+                      className="group relative overflow-hidden rounded-2xl border border-accent-primary/30 bg-surface-1 p-6 shadow-lg shadow-accent-primary/10 ring-1 ring-accent-primary/20 transition-all hover:shadow-accent-primary/20"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-transparent opacity-0 transition group-hover:opacity-100" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/10 to-transparent opacity-0 transition group-hover:opacity-100" />
                       
                       <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                         <div className="flex items-start gap-5">
                           <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border shadow-lg ${
                             res.isGreen 
                               ? 'border-green-500/20 bg-green-500/10 text-green-400 shadow-green-900/20' 
-                              : 'border-blue-500/20 bg-blue-500/10 text-blue-400 shadow-blue-900/20'
+                              : 'border-accent-primary/20 bg-accent-primary/10 text-accent-primary shadow-accent-primary/20'
                           }`}>
                             <Zap className="h-7 w-7" />
                           </div>
@@ -198,13 +198,13 @@ export default function AppointmentsPage() {
                               </span>
                             </div>
                             
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
                               <span className="flex items-center gap-1.5">
-                                <Calendar className="h-4 w-4 text-slate-500" />
+                                <Calendar className="h-4 w-4 text-text-tertiary" />
                                 {new Date(res.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
                               </span>
                               <span className="flex items-center gap-1.5">
-                                <Clock className="h-4 w-4 text-slate-500" />
+                                <Clock className="h-4 w-4 text-text-tertiary" />
                                 {res.hour}
                               </span>
                             </div>
@@ -227,7 +227,7 @@ export default function AppointmentsPage() {
                           </button>
                           <button
                             onClick={() => handleStartCharging(res.id)}
-                            className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-sm font-bold transition shadow-lg shadow-blue-600/25 active:scale-95 ring-1 ring-blue-400/20"
+                            className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-accent-primary hover:bg-accent-hover text-white text-sm font-bold transition shadow-lg shadow-accent-primary/25 active:scale-95 ring-1 ring-accent-primary/20"
                           >
                             Simülasyonu Başlat
                           </button>
@@ -242,7 +242,7 @@ export default function AppointmentsPage() {
             {/* COMPLETED RESERVATIONS */}
             {completedReservations.length > 0 && (
               <section>
-                <h2 className="mb-4 text-lg font-semibold text-slate-400 flex items-center gap-2">
+                <h2 className="mb-4 text-lg font-semibold text-text-tertiary flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5" />
                   Tamamlananlar
                 </h2>
@@ -250,23 +250,23 @@ export default function AppointmentsPage() {
                   {completedReservations.map((res) => (
                     <div 
                       key={res.id} 
-                      className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 p-6 grayscale hover:grayscale-0 transition-all"
+                      className="group relative overflow-hidden rounded-2xl border border-white/5 bg-surface-1 p-6 grayscale hover:grayscale-0 transition-all"
                     >
                       <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                         <div className="flex items-start gap-5">
-                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 text-slate-500 shadow-lg">
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-surface-2 text-text-tertiary shadow-lg">
                             <CheckCircle2 className="h-7 w-7" />
                           </div>
                           
                           <div>
                             <div className="flex items-center gap-3 mb-1">
-                              <h3 className="text-lg font-bold text-slate-400 group-hover:text-slate-200 transition-colors">{res.station.name}</h3>
-                              <span className="inline-flex items-center gap-1 rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-400 border border-slate-700">
+                              <h3 className="text-lg font-bold text-text-secondary group-hover:text-white transition-colors">{res.station.name}</h3>
+                              <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium text-text-tertiary border border-white/5">
                                 Tamamlandı
                               </span>
                             </div>
                             
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-text-tertiary">
                               <span className="flex items-center gap-1.5">
                                 <Calendar className="h-4 w-4" />
                                 {new Date(res.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
@@ -281,7 +281,7 @@ export default function AppointmentsPage() {
                         
                         <div className="flex items-center gap-3 sm:self-center">
                           <div className="text-right">
-                            <p className="text-xs text-slate-500">Kazanılan</p>
+                            <p className="text-xs text-text-tertiary">Kazanılan</p>
                             <p className="font-bold text-yellow-500/80 group-hover:text-yellow-400 transition-colors">+{res.earnedCoins} Coin</p>
                           </div>
                         </div>
@@ -295,7 +295,7 @@ export default function AppointmentsPage() {
             {/* CANCELLED RESERVATIONS */}
             {cancelledReservations.length > 0 && (
               <section>
-                <h2 className="mb-4 text-lg font-semibold text-slate-500 flex items-center gap-2">
+                <h2 className="mb-4 text-lg font-semibold text-text-tertiary flex items-center gap-2">
                   <X className="h-5 w-5" />
                   İptal Edilenler
                 </h2>

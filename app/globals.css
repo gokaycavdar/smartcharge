@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  /* Base Colors - Lighter/Softer Dark Theme (Slate) */
-  --bg-primary: 15 23 42;   /* Slate 900 */
-  --bg-surface-1: 30 41 59; /* Slate 800 */
-  --bg-surface-2: 51 65 85; /* Slate 700 */
-  --bg-surface-3: 71 85 105; /* Slate 600 */
+  /* Base Colors - Lighter Slate Theme (Matches Card.tsx) */
+  --bg-primary: 30 41 59;   /* Slate 800 */
+  --bg-surface-1: 51 65 85; /* Slate 700 */
+  --bg-surface-2: 71 85 105; /* Slate 600 */
+  --bg-surface-3: 100 116 139; /* Slate 500 */
 
   /* Text Colors */
   --text-primary: 248 250 252; /* Slate 50 */
@@ -15,7 +15,7 @@
   --text-tertiary: 148 163 184; /* Slate 400 */
 
   /* Borders */
-  --border-primary: 51 65 85; /* Slate 700 */
+  --border-primary: 71 85 105; /* Slate 600 */
   --border-highlight: 56 189 248; /* Sky 400 */
 
   /* Accents - Modern Turquoise/Blue */

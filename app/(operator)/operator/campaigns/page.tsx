@@ -249,21 +249,21 @@ export default function CampaignsPage() {
                   </div>
 
                   <h4 className="text-base font-bold text-white mb-1">{rec.title}</h4>
-                  <p className="text-xs font-medium text-text-tertiary mb-3 flex items-center gap-1">
+                  <p className="text-xs font-medium text-blue-200 mb-3 flex items-center gap-1">
                     <Target size={12} />
                     {rec.station.name}
                   </p>
                   
-                  <p className="text-sm text-text-secondary leading-relaxed mb-4">
+                  <p className="text-sm text-slate-300 leading-relaxed mb-4">
                     {rec.reason}
                   </p>
                 </div>
 
                 {/* Footer Action */}
-                <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                <div className="pt-4 border-t border-white/10 flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-text-tertiary font-bold uppercase tracking-wider">Önerilen</span>
-                    <span className="text-sm font-bold text-white">{rec.suggestedDiscount} İndirim</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Önerilen</span>
+                    <span className="text-lg font-bold text-white">{rec.suggestedDiscount} İndirim</span>
                   </div>
                   <button
                     onClick={() => {
@@ -277,7 +277,7 @@ export default function CampaignsPage() {
                         target: rec.station.name
                       }));
                     }}
-                    className="flex items-center gap-2 rounded-lg bg-surface-3 px-4 py-2 text-xs font-bold text-white hover:bg-accent-primary transition shadow-md shadow-black/20"
+                    className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-accent-primary transition shadow-md shadow-black/20 border border-white/5"
                   >
                     Oluştur <ArrowRight size={14} />
                   </button>
@@ -452,33 +452,33 @@ export default function CampaignsPage() {
               </div>
 
               <h3 className="text-xl font-bold text-white mb-2">{campaign.title}</h3>
-              <p className="text-sm text-text-secondary line-clamp-2 mb-6 h-10">{campaign.description}</p>
+              <p className="text-sm text-slate-300 line-clamp-2 mb-6 h-10">{campaign.description}</p>
 
-              <div className="space-y-3 border-t border-white/5 pt-4">
+              <div className="space-y-3 border-t border-white/10 pt-4">
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-text-tertiary">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <Tag size={14} />
                     <span>İndirim</span>
                   </div>
-                  <span className="font-bold text-accent-primary">{campaign.discount}</span>
+                  <span className="font-bold text-accent-primary text-lg">{campaign.discount}</span>
                 </div>
                 
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-text-tertiary">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <Users size={14} />
                     <span>Hedef</span>
                   </div>
-                  <span className="font-medium text-text-secondary truncate max-w-[150px]">
+                  <span className="font-semibold text-white truncate max-w-[150px]">
                     {campaign.station ? campaign.station.name : "Tüm İstasyonlar"}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 text-text-tertiary">
+                  <div className="flex items-center gap-2 text-slate-400">
                     <Clock size={14} />
                     <span>Bitiş</span>
                   </div>
-                  <span className="font-medium text-text-secondary">
+                  <span className="font-semibold text-white">
                     {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString('tr-TR') : "Süresiz"}
                   </span>
                 </div>

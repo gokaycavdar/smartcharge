@@ -16,7 +16,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
           <div className="h-9 w-9 rounded-xl bg-accent-primary flex items-center justify-center shadow-lg shadow-accent-primary/20">
              <Zap className="h-5 w-5 text-white fill-white" />
           </div>
-          <span className="hidden lg:block text-white tracking-tight font-display font-extrabold">Otwatt</span>
+          <span className="hidden lg:block text-white tracking-tight font-display font-extrabold">Otowatt</span>
         </div>
         
         <nav className="space-y-1.5 flex-1">

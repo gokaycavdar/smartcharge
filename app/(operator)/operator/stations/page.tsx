@@ -91,31 +91,6 @@ export default function StationsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button className="flex items-center gap-2 rounded-xl border border-white/10 bg-surface-1 px-4 py-3 text-sm font-medium text-text-secondary hover:bg-surface-2 transition">
-            <Filter size={18} />
-            Filtrele
-          </button>
-        </div>
-
-        <div className="flex bg-surface-1 rounded-xl p-1 border border-white/10">
-          <button
-            onClick={() => setViewMode("list")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
-              viewMode === "list" ? "bg-surface-3 text-accent-primary shadow-sm" : "text-text-secondary hover:text-white"
-            }`}
-          >
-            <List size={18} />
-            Liste
-          </button>
-          <button
-            onClick={() => setViewMode("map")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
-              viewMode === "map" ? "bg-surface-3 text-accent-primary shadow-sm" : "text-text-secondary hover:text-white"
-            }`}
-          >
-            <MapIcon size={18} />
-            Harita
-          </button>
         </div>
       </div>
 
@@ -139,13 +114,6 @@ export default function StationsPage() {
           >
             İlk istasyonunuzu ekleyin &rarr;
           </Link>
-        </div>
-      ) : viewMode === "map" ? (
-        <div className="h-[600px] rounded-2xl overflow-hidden border border-white/10">
-          <Map 
-            stations={filteredStations} 
-            onSelect={(station) => router.push(`/operator/stations/${station.id}`)}
-          />
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

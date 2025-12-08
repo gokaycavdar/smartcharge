@@ -15,7 +15,7 @@ type LoginResponse = {
 
 const DEMO_EMAILS = {
 	driver: "driver@test.com",
-	operator: "info@zorlu.com",
+	operator: "info@otowatt.com",
 };
 
 export default function AuthLandingPage() {
@@ -97,15 +97,15 @@ export default function AuthLandingPage() {
 					</div>
 
 					<h1 className="mb-6 text-5xl font-extrabold tracking-tight sm:text-7xl font-display">
-						Akıllı Şarjın <br />
+						SmartCharge <br />
 						<span className="text-gradient">
-							Geleceği Burada
+							Akıllı Şarjın Geleceği
 						</span>
 					</h1>
 					
 					<p className="mx-auto mb-10 max-w-2xl text-lg text-text-secondary leading-relaxed">
-						Şebeke yüküne göre en verimli saatleri öneren, boş istasyonları otomatik bulan, 
-						Coin ve XP ile oyunlaştırılmış yeni nesil şarj platformu.
+						Yapay zeka destekli önerilerle en verimli saatlerde şarj et, 
+						oyunlaştırma ile kazan. Elektrikli araç deneyimini SmartCharge ile dönüştür.
 					</p>
 
 					{/* Feature Grid */}
@@ -114,21 +114,21 @@ export default function AuthLandingPage() {
 							<div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-accent-primary/10 text-accent-primary group-hover:scale-110 transition-transform">
 								<Zap className="h-5 w-5" />
 							</div>
-							<h3 className="font-semibold text-white">AI Smart Pick</h3>
+							<h3 className="font-semibold text-white">Yapay Zeka Destekli</h3>
 							<p className="mt-1 text-xs text-text-secondary">En uygun ve ekonomik şarj saatlerini belirler.</p>
 						</div>
 						<div className="group glass-card rounded-2xl p-5 transition hover:border-green-500/30 hover:bg-surface-2">
 							<div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10 text-green-400 group-hover:scale-110 transition-transform">
 								<MapPin className="h-5 w-5" />
 							</div>
-							<h3 className="font-semibold text-white">Yoğunluk Haritası</h3>
+							<h3 className="font-semibold text-white">Akıllı Harita</h3>
 							<p className="mt-1 text-xs text-text-secondary">Gerçek zamanlı istasyon doluluk takibi.</p>
 						</div>
 						<div className="group glass-card rounded-2xl p-5 transition hover:border-yellow-500/30 hover:bg-surface-2">
 							<div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10 text-yellow-400 group-hover:scale-110 transition-transform">
 								<Trophy className="h-5 w-5" />
 							</div>
-							<h3 className="font-semibold text-white">Gamification</h3>
+							<h3 className="font-semibold text-white">Oyunlaştırma</h3>
 							<p className="mt-1 text-xs text-text-secondary">Coin, XP ve rozetlerle ödül sistemi.</p>
 						</div>
 						<div className="group glass-card rounded-2xl p-5 transition hover:border-purple-500/30 hover:bg-surface-2">
@@ -146,7 +146,7 @@ export default function AuthLandingPage() {
 							onClick={() => setShowLogin(true)}
 							className="group relative inline-flex items-center gap-3 rounded-full bg-white px-8 py-4 text-lg font-bold text-primary-bg transition-all hover:bg-accent-primary hover:text-white hover:scale-105 hover:shadow-[0_0_40px_-10px_rgba(14,165,233,0.5)] active:scale-95"
 						>
-							Uygulamaya Başla
+							Hemen Başla
 							<ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
 						</button>
 					) : (

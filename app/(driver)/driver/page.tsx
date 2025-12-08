@@ -366,8 +366,8 @@ export default function DriverDashboard() {
                           onClick={() => handleBooking(slot)}
                           className={`group relative flex flex-col justify-between rounded-xl border p-3 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
                             slot.isGreen
-                              ? "border-green-500/30 bg-gradient-to-b from-green-500/10 to-green-900/20 hover:border-green-500/60 hover:shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)]"
-                              : "border-slate-700 bg-slate-800/50 hover:border-slate-500 hover:bg-slate-800"
+                              ? "border-green-500/40 bg-gradient-to-b from-green-500/20 to-green-900/30 hover:border-green-400 hover:shadow-[0_0_20px_-5px_rgba(34,197,94,0.4)]"
+                              : "border-white/5 bg-surface-1/50 hover:border-white/20 hover:bg-surface-2"
                           } ${filterMode === "ECO" && !slot.isGreen ? "opacity-50 grayscale" : ""}`}
                         >
                           {slot.isGreen && (
@@ -375,7 +375,7 @@ export default function DriverDashboard() {
                           )}
                           
                           <div className="mb-2 flex items-center justify-between">
-                            <span className={`text-sm font-bold ${slot.isGreen ? "text-green-100" : "text-slate-200"}`}>
+                            <span className={`text-sm font-bold ${slot.isGreen ? "text-green-100" : "text-white"}`}>
                               {slot.label.split(" - ")[0]}
                             </span>
                             <span className={`text-[10px] font-medium ${
@@ -387,12 +387,12 @@ export default function DriverDashboard() {
 
                           <div className="space-y-1">
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-slate-400">Fiyat</span>
-                              <span className="font-medium text-slate-200">{slot.price} ₺</span>
+                              <span className="text-text-tertiary">Fiyat</span>
+                              <span className="font-medium text-text-secondary">{slot.price} ₺</span>
                             </div>
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-slate-400">Kazanç</span>
-                              <span className={`font-bold ${slot.isGreen ? "text-yellow-400" : "text-slate-500"}`}>
+                              <span className="text-text-tertiary">Kazanç</span>
+                              <span className={`font-bold ${slot.isGreen ? "text-yellow-400" : "text-text-tertiary"}`}>
                                 +{slot.coins}
                               </span>
                             </div>
