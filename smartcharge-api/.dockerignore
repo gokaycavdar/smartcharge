@@ -1,0 +1,30 @@
+# Dependencies
+go.sum
+
+# Binary output
+bin/
+
+# Environment files (injected via docker-compose)
+.env
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+
+# SQLC config (not needed at runtime)
+db/sqlc.yaml
+
+# Generated SQLC code is needed (included in source)
+# Migrations are explicitly copied in Dockerfile
+
+# Scripts (seed runs separately)
+scripts/

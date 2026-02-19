@@ -1,5 +1,6 @@
 # docker-compose.yml
 version: "3.8"
+
 services:
   db:
     image: postgres:15
@@ -12,5 +13,29 @@ services:
       - "5432:5432"
     volumes:
       - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d evcharge"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./smartcharge-api
+      dockerfile: Dockerfile
+    container_name: evcharge-api
+    environment:
+      DATABASE_URL: postgres://admin:admin@db:5432/evcharge?sslmode=disable
+      JWT_SECRET: smartcharge-dev-secret-key-2026
+      PORT: "8080"
+      GIN_MODE: debug
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   dbdata:
