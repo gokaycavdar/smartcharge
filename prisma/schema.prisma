@@ -49,6 +49,9 @@ model Campaign {
   
   coinReward  Int      @default(0) // Kampanya ile kazanılacak ekstra coin
 
+  // Hedef badge'ler - bu badge'lere sahip kullanıcılara gösterilecek
+  targetBadges Badge[] @relation("CampaignTargetBadges")
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -59,6 +62,8 @@ model Badge {
   description String  // Örn: "Gece 02:00-05:00 arası 3 kez şarj et"
   icon        String  // Emoji veya icon adı (örn: "🦉")
   users       User[]
+  // Bu badge'i hedefleyen kampanyalar
+  targetedCampaigns Campaign[] @relation("CampaignTargetBadges")
 }
 
 model Station {
@@ -71,9 +76,28 @@ model Station {
   density     Int      @default(0) // 0-100 arası yoğunluk (0: Boş, 100: Dolu)
   ownerId     Int?
   
+  // İstasyon yoğunluk profili: "central" | "suburban" | "outskirt"
+  // Merkezi istasyonlar daha yoğun, kenar istasyonlar daha boş
+  densityProfile String @default("suburban")
+  
   owner       User?    @relation(fields: [ownerId], references: [id])
   reservations Reservation[]
   campaigns    Campaign[]
+  densityForecasts StationDensityForecast[]
+}
+
+// Haftalık yoğunluk tahmin tablosu (Linear Regression ile oluşturulacak)
+model StationDensityForecast {
+  id            Int      @id @default(autoincrement())
+  stationId     Int
+  dayOfWeek     Int      // 0-6 (0: Pazartesi, 6: Pazar)
+  hour          Int      // 0-23
+  predictedLoad Int      // 0-100 arası tahmin edilen yoğunluk
+  
+  station       Station  @relation(fields: [stationId], references: [id])
+  updatedAt     DateTime @updatedAt
+
+  @@unique([stationId, dayOfWeek, hour])
 }
 
 model Reservation {

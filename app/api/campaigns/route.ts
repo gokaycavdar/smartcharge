@@ -13,7 +13,10 @@ export async function GET(request: Request) {
   try {
     const campaigns = await prisma.campaign.findMany({
       where: { ownerId },
-      include: { station: { select: { name: true } } },
+      include: {
+        station: { select: { name: true } },
+        targetBadges: true,
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -27,7 +30,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, description, status, target, discount, endDate, ownerId, stationId, coinReward } = body;
+    const { title, description, status, target, discount, endDate, ownerId, stationId, coinReward, targetBadgeIds } = body;
 
     if (!title || !ownerId) {
       return NextResponse.json({ error: "Eksik bilgi" }, { status: 400 });
@@ -44,7 +47,11 @@ export async function POST(request: Request) {
         ownerId: Number(ownerId),
         stationId: stationId ? Number(stationId) : null,
         coinReward: coinReward ? Number(coinReward) : 0,
+        targetBadges: targetBadgeIds && targetBadgeIds.length > 0
+          ? { connect: targetBadgeIds.map((id: number) => ({ id })) }
+          : undefined,
       },
+      include: { targetBadges: true },
     });
 
     return NextResponse.json(campaign);

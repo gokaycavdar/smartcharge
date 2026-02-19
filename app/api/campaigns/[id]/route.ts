@@ -13,8 +13,17 @@ export async function PUT(request: Request, { params }: Params) {
 
   try {
     const body = await request.json();
-    const { title, description, status, target, discount, endDate, stationId, coinReward } = body;
+    const { title, description, status, target, discount, endDate, stationId, coinReward, targetBadgeIds } = body;
 
+    // Önce mevcut badge bağlantılarını kaldır
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: {
+        targetBadges: { set: [] },
+      },
+    });
+
+    // Sonra yeni verileri güncelle ve badge'leri bağla
     const campaign = await prisma.campaign.update({
       where: { id: campaignId },
       data: {
@@ -26,7 +35,11 @@ export async function PUT(request: Request, { params }: Params) {
         endDate: endDate ? new Date(endDate) : null,
         stationId: stationId ? Number(stationId) : null,
         coinReward: coinReward ? Number(coinReward) : 0,
+        targetBadges: targetBadgeIds && targetBadgeIds.length > 0
+          ? { connect: targetBadgeIds.map((id: number) => ({ id })) }
+          : undefined,
       },
+      include: { targetBadges: true },
     });
 
     return NextResponse.json(campaign);

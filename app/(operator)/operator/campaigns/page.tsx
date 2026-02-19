@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Megaphone, Plus, Calendar, Users, ArrowRight, Edit2, Trash2, X, Save, Tag, Clock, AlertCircle, Sparkles, TrendingDown, Zap, Target, BarChart3 } from "lucide-react";
+import { Megaphone, Plus, Calendar, Users, ArrowRight, Edit2, Trash2, X, Save, Tag, Clock, AlertCircle, Sparkles, TrendingDown, Zap, Target, BarChart3, Award } from "lucide-react";
+
+type Badge = {
+  id: number;
+  name: string;
+  icon: string;
+  description: string;
+};
 
 type Campaign = {
   id: number;
@@ -14,6 +21,7 @@ type Campaign = {
   stationId?: number | null;
   coinReward?: number;
   station?: { name: string };
+  targetBadges?: Badge[];
 };
 
 type Station = {
@@ -25,16 +33,18 @@ type Station = {
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
+  const [badges, setBadges] = useState<Badge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  
+  const [selectedBadgeIds, setSelectedBadgeIds] = useState<number[]>([]);
+
   // AI Recommendations Logic
   const recommendations = useMemo(() => {
     if (stations.length === 0) return [];
-    
+
     const recs = [];
-    
+
     // 1. Low Density Recommendation
     const lowDensityStations = stations.filter(s => s.mockStatus === "GREEN");
     if (lowDensityStations.length > 0) {
@@ -85,7 +95,7 @@ export default function CampaignsPage() {
 
     return recs;
   }, [stations]);
-  
+
   // Form state
   const [formData, setFormData] = useState<Partial<Campaign>>({
     title: "",
@@ -101,16 +111,17 @@ export default function CampaignsPage() {
   const fetchCampaigns = async () => {
     try {
       const ownerId = localStorage.getItem("ecocharge:userId") ?? "1";
-      const [resCampaigns, resStations] = await Promise.all([
+      const [resCampaigns, resStations, resBadges] = await Promise.all([
         fetch(`/api/campaigns?ownerId=${ownerId}`),
-        fetch(`/api/company/my-stations?ownerId=${ownerId}`)
+        fetch(`/api/company/my-stations?ownerId=${ownerId}`),
+        fetch(`/api/badges`)
       ]);
 
       if (resCampaigns.ok) {
         const data = await resCampaigns.json();
         setCampaigns(data);
       }
-      
+
       if (resStations.ok) {
         const data = await resStations.json();
         // Handle different response structures
@@ -118,6 +129,13 @@ export default function CampaignsPage() {
           setStations(data.stations);
         } else if (Array.isArray(data)) {
           setStations(data);
+        }
+      }
+
+      if (resBadges.ok) {
+        const data = await resBadges.json();
+        if (data.badges) {
+          setBadges(data.badges);
         }
       }
     } catch (error) {
@@ -142,6 +160,7 @@ export default function CampaignsPage() {
       stationId: null,
       coinReward: 50,
     });
+    setSelectedBadgeIds([]);
     setIsCreating(true);
     setEditingId(null);
   };
@@ -157,6 +176,7 @@ export default function CampaignsPage() {
       stationId: campaign.stationId,
       coinReward: campaign.coinReward,
     });
+    setSelectedBadgeIds(campaign.targetBadges?.map(b => b.id) || []);
     setEditingId(campaign.id);
     setIsCreating(true);
   };
@@ -170,12 +190,13 @@ export default function CampaignsPage() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, ownerId }),
+        body: JSON.stringify({ ...formData, ownerId, targetBadgeIds: selectedBadgeIds }),
       });
 
       if (res.ok) {
         setIsCreating(false);
         setEditingId(null);
+        setSelectedBadgeIds([]);
         fetchCampaigns();
       } else {
         alert("Kaydetme başarısız oldu.");
@@ -205,7 +226,7 @@ export default function CampaignsPage() {
           <p className="text-text-secondary mt-1">Müşteri etkileşimini artırmak için kampanyalar oluşturun.</p>
         </div>
         {!isCreating && (
-          <button 
+          <button
             onClick={handleCreate}
             className="flex items-center gap-2 rounded-xl bg-accent-primary px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-accent-primary/20 transition hover:bg-accent-hover hover:shadow-accent-primary/30"
           >
@@ -222,28 +243,26 @@ export default function CampaignsPage() {
             <Sparkles className="h-5 w-5 text-accent-primary" />
             <h3 className="text-lg font-bold text-white">AI Kampanya Önerileri</h3>
           </div>
-          
+
           <div className="flex overflow-x-auto pb-6 -mx-4 px-4 gap-5 scrollbar-thin scrollbar-thumb-surface-3 scrollbar-track-transparent">
             {recommendations.map((rec) => (
-              <div 
-                key={rec.id} 
+              <div
+                key={rec.id}
                 className="group relative flex-shrink-0 w-80 flex flex-col justify-between rounded-2xl bg-surface-1 border border-white/5 p-5 shadow-sm transition-all hover:shadow-md hover:border-accent-primary/30 hover:-translate-y-1"
               >
                 {/* Header */}
                 <div>
                   <div className="flex items-start justify-between mb-3">
-                    <div className={`p-2.5 rounded-xl ${
-                      rec.color === "blue" ? "bg-blue-500/10 text-blue-400" :
+                    <div className={`p-2.5 rounded-xl ${rec.color === "blue" ? "bg-blue-500/10 text-blue-400" :
                       rec.color === "orange" ? "bg-orange-500/10 text-orange-400" :
-                      "bg-purple-500/10 text-purple-400"
-                    }`}>
+                        "bg-purple-500/10 text-purple-400"
+                      }`}>
                       <rec.icon size={20} />
                     </div>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
-                      rec.color === "blue" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${rec.color === "blue" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
                       rec.color === "orange" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" :
-                      "bg-purple-500/10 text-purple-400 border-purple-500/20"
-                    }`}>
+                        "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                      }`}>
                       {rec.stat}
                     </span>
                   </div>
@@ -253,7 +272,7 @@ export default function CampaignsPage() {
                     <Target size={12} />
                     {rec.station.name}
                   </p>
-                  
+
                   <p className="text-sm text-slate-300 leading-relaxed mb-4">
                     {rec.reason}
                   </p>
@@ -296,7 +315,7 @@ export default function CampaignsPage() {
               <X size={20} />
             </button>
           </div>
-          
+
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-xs font-medium text-text-secondary">Kampanya Başlığı</label>
@@ -307,7 +326,7 @@ export default function CampaignsPage() {
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-xs font-medium text-text-secondary">Hedef Kitle / İstasyon</label>
               <select
@@ -366,16 +385,59 @@ export default function CampaignsPage() {
                   <button
                     key={status}
                     onClick={() => setFormData({ ...formData, status: status as any })}
-                    className={`flex-1 rounded-xl border py-2 text-sm font-medium transition ${
-                      formData.status === status
-                        ? "border-accent-primary bg-accent-primary/10 text-accent-primary"
-                        : "border-white/10 bg-surface-2 text-text-secondary hover:bg-surface-3"
-                    }`}
+                    className={`flex-1 rounded-xl border py-2 text-sm font-medium transition ${formData.status === status
+                      ? "border-accent-primary bg-accent-primary/10 text-accent-primary"
+                      : "border-white/10 bg-surface-2 text-text-secondary hover:bg-surface-3"
+                      }`}
                   >
                     {status === "ACTIVE" ? "Aktif" : status === "DRAFT" ? "Taslak" : "Bitti"}
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Hedef Badge Seçimi */}
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-xs font-medium text-text-secondary flex items-center gap-2">
+                <Award size={14} />
+                Hedef Rozetler (Bu rozetlere sahip kullanıcılara gösterilecek)
+              </label>
+              <div className="flex flex-wrap gap-2 p-4 rounded-xl border border-white/10 bg-surface-2">
+                {badges.length === 0 ? (
+                  <p className="text-text-tertiary text-sm">Yükleniyor...</p>
+                ) : (
+                  badges.map((badge) => (
+                    <button
+                      key={badge.id}
+                      type="button"
+                      onClick={() => {
+                        if (selectedBadgeIds.includes(badge.id)) {
+                          setSelectedBadgeIds(selectedBadgeIds.filter(id => id !== badge.id));
+                        } else {
+                          setSelectedBadgeIds([...selectedBadgeIds, badge.id]);
+                        }
+                      }}
+                      className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${selectedBadgeIds.includes(badge.id)
+                        ? "bg-purple-500/20 text-purple-300 border-2 border-purple-500"
+                        : "bg-surface-3 text-text-secondary border-2 border-transparent hover:bg-surface-3/80"
+                        }`}
+                    >
+                      <span>{badge.icon}</span>
+                      <span>{badge.name}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+              {selectedBadgeIds.length > 0 && (
+                <p className="text-xs text-purple-400">
+                  {selectedBadgeIds.length} rozet seçildi - Bu kampanya sadece seçili rozetlere sahip kullanıcılara gösterilecek
+                </p>
+              )}
+              {selectedBadgeIds.length === 0 && (
+                <p className="text-xs text-text-tertiary">
+                  Rozet seçmezseniz kampanya herkese gösterilecek
+                </p>
+              )}
             </div>
           </div>
 
@@ -410,7 +472,7 @@ export default function CampaignsPage() {
           <p className="mt-2 max-w-sm text-sm text-text-secondary">
             Henüz bir kampanya oluşturmadınız. İlk kampanyanızı oluşturarak başlayın.
           </p>
-          <button 
+          <button
             onClick={handleCreate}
             className="mt-6 text-sm font-medium text-accent-primary hover:text-accent-hover"
           >
@@ -420,18 +482,18 @@ export default function CampaignsPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {campaigns.map((campaign) => (
-            <div 
-              key={campaign.id} 
+            <div
+              key={campaign.id}
               className="group relative overflow-hidden rounded-2xl border border-white/10 bg-surface-1 p-6 transition hover:border-accent-primary/30 hover:shadow-lg hover:shadow-accent-primary/10"
             >
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition z-10">
-                <button 
+                <button
                   onClick={() => handleEdit(campaign)}
                   className="p-2 rounded-lg bg-surface-2 hover:bg-accent-primary/10 hover:text-accent-primary text-text-tertiary transition border border-white/5"
                 >
                   <Edit2 className="h-4 w-4" />
                 </button>
-                <button 
+                <button
                   onClick={() => handleDelete(campaign.id)}
                   className="p-2 rounded-lg bg-surface-2 hover:bg-red-500/10 hover:text-red-400 text-text-tertiary transition border border-white/5"
                 >
@@ -440,13 +502,12 @@ export default function CampaignsPage() {
               </div>
 
               <div className="flex items-start justify-between mb-4">
-                <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                  campaign.status === 'ACTIVE' 
-                    ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
-                    : campaign.status === 'DRAFT' 
-                      ? 'bg-surface-3 text-text-secondary border border-white/10' 
-                      : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                }`}>
+                <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${campaign.status === 'ACTIVE'
+                  ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                  : campaign.status === 'DRAFT'
+                    ? 'bg-surface-3 text-text-secondary border border-white/10'
+                    : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                  }`}>
                   {campaign.status === 'ACTIVE' ? 'Aktif' : campaign.status === 'DRAFT' ? 'Taslak' : 'Bitti'}
                 </div>
               </div>
@@ -462,7 +523,7 @@ export default function CampaignsPage() {
                   </div>
                   <span className="font-bold text-accent-primary text-lg">{campaign.discount}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2 text-slate-400">
                     <Users size={14} />
@@ -483,7 +544,7 @@ export default function CampaignsPage() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-accent-primary to-accent-secondary opacity-0 transition-opacity group-hover:opacity-100"></div>
             </div>
           ))}
