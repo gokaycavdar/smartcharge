@@ -1,6 +1,3 @@
-# Dependencies
-go.sum
-
 # Binary output
 bin/
 

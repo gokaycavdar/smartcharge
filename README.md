@@ -32,7 +32,7 @@ The frontend proxies all `/api/*` requests to the Go backend at `http://localhos
 ## Prerequisites
 
 - Docker & Docker Compose
-- Go 1.25+ (for backend development)
+- Go 1.25.4+ (for backend development)
 - Node.js 20+ and npm (for frontend development)
 - [golang-migrate](https://github.com/golang-migrate/migrate) CLI (for running migrations)
 - [SQLC](https://sqlc.dev/) (only if modifying database queries)
@@ -59,7 +59,7 @@ cp smartcharge-api/.env.example smartcharge-api/.env
 ### 2. Start the database and API
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 This starts PostgreSQL (port 5432) and the Go API (port 8080). The API waits for the database health check before starting.
@@ -67,13 +67,13 @@ This starts PostgreSQL (port 5432) and the Go API (port 8080). The API waits for
 ### 3. Run database migrations
 
 ```bash
-migrate -database "postgres://admin:admin@localhost:5432/evcharge?sslmode=disable" \
-        -path smartcharge-api/db/migrations up
+migrate -database "postgres://admin:admin@localhost:5432/evcharge?sslmode=disable" -path smartcharge-api/db/migrations up
 ```
 
 ### 4. Seed the database
 
 ```bash
+cd smartcharge-api
 go run ./scripts/seed.go
 ```
 
@@ -82,6 +82,7 @@ This creates demo users, 46 stations (Manisa/Izmir), 5 badges, 4 campaigns, and 
 ### 5. Start the frontend
 
 ```bash
+cd ..
 npm install
 npm run dev
 ```
