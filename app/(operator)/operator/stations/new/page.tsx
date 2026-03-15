@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { 
-  ArrowLeft, 
-  Check, 
-  ChevronRight, 
-  MapPin, 
-  Zap, 
-  DollarSign, 
-  Info, 
+import {
+  ArrowLeft,
+  Check,
+  ChevronRight,
+  MapPin,
+  Zap,
+  DollarSign,
+  Info,
   BatteryCharging,
   Save
 } from "lucide-react";
@@ -69,8 +69,8 @@ export default function NewStationPage() {
         method: "POST",
         body: JSON.stringify({
           name: formData.name,
-          lat: formData.latitude,
-          lng: formData.longitude,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
           address: formData.address,
           price: formData.price,
         }),
@@ -95,8 +95,8 @@ export default function NewStationPage() {
       <header className="border-b border-white/10 bg-surface-1/50 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link 
-              href="/operator/stations" 
+            <Link
+              href="/operator/stations"
               className="p-2 rounded-lg hover:bg-white/5 text-text-tertiary hover:text-white transition"
             >
               <ArrowLeft size={20} />
@@ -114,25 +114,24 @@ export default function NewStationPage() {
         <div className="mb-10">
           <div className="flex items-center justify-between relative">
             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-surface-2 -z-10"></div>
-            <div 
+            <div
               className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-accent-primary transition-all duration-500 -z-10"
               style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
             ></div>
-            
+
             {STEPS.map((step) => {
               const isActive = step.id === currentStep;
               const isCompleted = step.id < currentStep;
-              
+
               return (
                 <div key={step.id} className="flex flex-col items-center gap-2 bg-primary-bg px-2">
-                  <div 
-                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                      isActive 
-                        ? "border-accent-primary bg-accent-primary/10 text-accent-primary" 
-                        : isCompleted 
-                          ? "border-accent-primary bg-accent-primary text-white" 
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${isActive
+                        ? "border-accent-primary bg-accent-primary/10 text-accent-primary"
+                        : isCompleted
+                          ? "border-accent-primary bg-accent-primary text-white"
                           : "border-surface-3 bg-surface-1 text-text-tertiary"
-                    }`}
+                      }`}
                   >
                     {isCompleted ? <Check size={18} /> : <step.icon size={18} />}
                   </div>
@@ -150,15 +149,15 @@ export default function NewStationPage() {
           {currentStep === 1 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <h2 className="text-xl font-bold text-white mb-6">İstasyon Özellikleri</h2>
-              
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text-secondary">İstasyon Adı</label>
-                <input 
-                  type="text" 
-                  placeholder="Örn: Alsancak Hızlı Şarj" 
+                <input
+                  type="text"
+                  placeholder="Örn: Alsancak Hızlı Şarj"
                   className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white placeholder-text-tertiary focus:border-accent-primary focus:ring-1 focus:ring-accent-primary outline-none transition"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
 
@@ -166,25 +165,23 @@ export default function NewStationPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-secondary">Şarj Tipi</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => setFormData({...formData, type: "AC"})}
-                      className={`p-3 rounded-xl border text-center transition ${
-                        formData.type === "AC" 
-                          ? "border-accent-primary bg-accent-primary/10 text-accent-primary" 
+                      onClick={() => setFormData({ ...formData, type: "AC" })}
+                      className={`p-3 rounded-xl border text-center transition ${formData.type === "AC"
+                          ? "border-accent-primary bg-accent-primary/10 text-accent-primary"
                           : "border-white/10 bg-surface-2 text-text-tertiary hover:border-white/20"
-                      }`}
+                        }`}
                     >
                       AC
                     </button>
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => setFormData({...formData, type: "DC"})}
-                      className={`p-3 rounded-xl border text-center transition ${
-                        formData.type === "DC" 
-                          ? "border-accent-primary bg-accent-primary/10 text-accent-primary" 
+                      onClick={() => setFormData({ ...formData, type: "DC" })}
+                      className={`p-3 rounded-xl border text-center transition ${formData.type === "DC"
+                          ? "border-accent-primary bg-accent-primary/10 text-accent-primary"
                           : "border-white/10 bg-surface-2 text-text-tertiary hover:border-white/20"
-                      }`}
+                        }`}
                     >
                       DC
                     </button>
@@ -193,21 +190,21 @@ export default function NewStationPage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-secondary">Güç (kW)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white placeholder-text-tertiary focus:border-accent-primary focus:ring-1 focus:ring-accent-primary outline-none transition"
                     value={formData.power}
-                    onChange={(e) => setFormData({...formData, power: Number(e.target.value)})}
+                    onChange={(e) => setFormData({ ...formData, power: Number(e.target.value) })}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text-secondary">Soket Tipi</label>
-                <select 
+                <select
                   className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white focus:border-accent-primary focus:ring-1 focus:ring-accent-primary outline-none transition appearance-none"
                   value={formData.connectorType}
-                  onChange={(e) => setFormData({...formData, connectorType: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, connectorType: e.target.value })}
                 >
                   <option value="Type 2">Type 2 (Mennekes)</option>
                   <option value="CCS2">CCS2</option>
@@ -220,7 +217,7 @@ export default function NewStationPage() {
           {currentStep === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <h2 className="text-xl font-bold text-white mb-6">Konum Bilgileri</h2>
-              
+
               <div className="bg-surface-2 rounded-xl border border-white/10 p-4 h-48 flex items-center justify-center text-text-tertiary mb-4">
                 <div className="text-center">
                   <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -231,34 +228,34 @@ export default function NewStationPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-secondary">Enlem</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.0001"
                     className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white placeholder-text-tertiary focus:border-accent-primary outline-none transition"
                     value={formData.latitude}
-                    onChange={(e) => setFormData({...formData, latitude: Number(e.target.value)})}
+                    onChange={(e) => setFormData({ ...formData, latitude: Number(e.target.value) })}
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-secondary">Boylam</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.0001"
                     className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white placeholder-text-tertiary focus:border-accent-primary outline-none transition"
                     value={formData.longitude}
-                    onChange={(e) => setFormData({...formData, longitude: Number(e.target.value)})}
+                    onChange={(e) => setFormData({ ...formData, longitude: Number(e.target.value) })}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text-secondary">Açık Adres</label>
-                <textarea 
+                <textarea
                   rows={3}
-                  placeholder="Mahalle, Cadde, No..." 
+                  placeholder="Mahalle, Cadde, No..."
                   className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 text-white placeholder-text-tertiary focus:border-accent-primary outline-none transition resize-none"
                   value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 />
               </div>
             </div>
@@ -267,7 +264,7 @@ export default function NewStationPage() {
           {currentStep === 3 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <h2 className="text-xl font-bold text-white mb-6">Fiyatlandırma</h2>
-              
+
               <div className="p-6 rounded-2xl bg-gradient-to-br from-accent-primary/10 to-purple-500/10 border border-accent-primary/20 mb-6">
                 <div className="flex items-center gap-4">
                   <div className="p-3 rounded-full bg-accent-primary/20 text-accent-primary">
@@ -283,12 +280,12 @@ export default function NewStationPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text-secondary">Birim Fiyat (₺/kWh)</label>
                 <div className="relative">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.1"
                     className="w-full bg-surface-2 border border-white/10 rounded-xl p-4 pl-12 text-white text-lg font-semibold placeholder-text-tertiary focus:border-accent-primary outline-none transition"
                     value={formData.price}
-                    onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                   />
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary font-semibold">₺</span>
                 </div>
@@ -301,19 +298,18 @@ export default function NewStationPage() {
 
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between mt-10 pt-6 border-t border-slate-100">
-            <button 
+            <button
               onClick={handleBack}
               disabled={currentStep === 1}
-              className={`px-6 py-3 rounded-xl font-medium transition ${
-                currentStep === 1 
-                  ? "text-slate-400 cursor-not-allowed" 
+              className={`px-6 py-3 rounded-xl font-medium transition ${currentStep === 1
+                  ? "text-slate-400 cursor-not-allowed"
                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-              }`}
+                }`}
             >
               Geri
             </button>
-            
-            <button 
+
+            <button
               onClick={handleNext}
               disabled={isSubmitting}
               className="flex items-center gap-2 px-8 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-500 transition shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
