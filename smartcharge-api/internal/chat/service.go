@@ -32,8 +32,11 @@ func NewService(queries *generated.Queries, reservationSvc *reservation.Service,
 	var geminiProvider *ai.GeminiProvider
 	useAgentic := false
 	if cfg.GeminiAPIKey != "" {
+		fmt.Printf("[DEBUG] Initializing Gemini provider with model: %s\n", cfg.GeminiModel)
 		geminiProvider = ai.NewGeminiProvider(cfg.GeminiAPIKey, cfg.GeminiModel)
 		useAgentic = true
+	} else {
+		fmt.Println("[DEBUG] Gemini API key not configured, using Ollama fallback")
 	}
 
 	return &Service{

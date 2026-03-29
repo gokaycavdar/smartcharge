@@ -28,6 +28,8 @@ services:
       PORT: "8080"
       GIN_MODE: debug
       FRONTEND_URL: http://localhost:3000
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: gemini-1.5-flash
     ports:
       - "8080:8080"
     depends_on:

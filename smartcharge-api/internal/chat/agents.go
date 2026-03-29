@@ -349,6 +349,8 @@ func (s *Service) ExecuteAgenticChat(ctx context.Context, userMessage string, us
 	for iteration < maxIterations {
 		iteration++
 
+		fmt.Printf("[DEBUG] Executing agentic chat iteration %d with message: %s\n", iteration, userMessage)
+
 		// Call Gemini API with tools
 		response, err := geminiProvider.CompleteWithTools(
 			ctx,
@@ -360,11 +362,16 @@ func (s *Service) ExecuteAgenticChat(ctx context.Context, userMessage string, us
 		)
 
 		if err != nil {
+			// Log the error for debugging
+			fmt.Printf("[DEBUG] Gemini API error at iteration %d: %v\n", iteration, err)
+			fmt.Printf("[DEBUG] Error type: %T, Error string: %s\n", err, err.Error())
 			return &ChatResponse{
 				Role:    "bot",
-				Content: "Üzgünüm, AI servisiyle iletişim kuramıyorum. Lütfen daha sonra tekrar dene.",
+				Content: fmt.Sprintf("Üzgünüm, AI servisiyle iletişim kuramıyorum.\n\nHata detayı: %v\n\nLütfen API key'inizi kontrol edin.", err),
 			}, nil
 		}
+
+		fmt.Printf("[DEBUG] Got response: %s\n", response.Content)
 
 		// Check if this is a function call
 		toolCall, textContent := parseFunctionCallFromResponse(response.Content)
