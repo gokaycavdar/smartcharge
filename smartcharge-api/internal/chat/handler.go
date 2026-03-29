@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	apperrors "smartcharge-api/internal/errors"
+	"smartcharge-api/internal/middleware"
 	"smartcharge-api/internal/response"
 )
 
@@ -28,6 +29,7 @@ func NewHandler(service *Service) *Handler {
 
 // RegisterRoutes registers chat routes on the given router group.
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
+	// Chat endpoint with auth
 	rg.POST("/chat", h.Chat)
 }
 
@@ -39,7 +41,14 @@ func (h *Handler) Chat(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Chat(c.Request.Context(), req.Message, req.StationID, req.Date, req.Hour, req.IsGreen)
+	// Extract userID from JWT (optional for now, but required for agentic chat)
+	userID, exists := middleware.GetUserID(c)
+	if !exists {
+		// For backward compatibility, allow anonymous chat
+		userID = 0
+	}
+
+	result, err := h.service.Chat(c.Request.Context(), userID, req.Message, req.StationID, req.Date, req.Hour, req.IsGreen)
 	if err != nil {
 		handleError(c, err)
 		return

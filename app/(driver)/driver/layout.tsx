@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Map, Calendar, Wallet, LogOut, Zap } from "lucide-react";
 import ChatWidget from "@/components/ChatWidget";
 import GlobalAIWidget from "@/components/GlobalAIWidget";
+import GeminiChatWidget from "@/components/GeminiChatWidget";
 
 export default function DriverLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -68,7 +69,7 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
       <main className={`flex-1 relative ${pathname === "/driver" ? "overflow-hidden" : "overflow-y-auto"}`}>
         {children}
         <GlobalAIWidget />
-        <ChatWidget />
+        <GeminiChatWidget />
       </main>
     </div>
   );

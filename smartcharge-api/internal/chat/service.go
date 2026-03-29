@@ -19,18 +19,30 @@ type Service struct {
 	queries        *generated.Queries
 	reservationSvc *reservation.Service
 	provider       ai.Provider
+	geminiProvider *ai.GeminiProvider
 	systemPrompt   string
+	useAgentic     bool
 }
 
 // NewService creates a new chat service.
 func NewService(queries *generated.Queries, reservationSvc *reservation.Service, cfg *config.Config) *Service {
 	provider := ai.NewOllamaProvider(cfg.LLMURL, cfg.LLMModel)
 
+	// Initialize Gemini provider if API key is provided
+	var geminiProvider *ai.GeminiProvider
+	useAgentic := false
+	if cfg.GeminiAPIKey != "" {
+		geminiProvider = ai.NewGeminiProvider(cfg.GeminiAPIKey, cfg.GeminiModel)
+		useAgentic = true
+	}
+
 	return &Service{
 		queries:        queries,
 		reservationSvc: reservationSvc,
 		provider:       provider,
+		geminiProvider: geminiProvider,
 		systemPrompt:   buildSystemPrompt(),
+		useAgentic:     useAgentic,
 	}
 }
 
@@ -74,7 +86,18 @@ type ChatResponse struct {
 }
 
 // Chat processes a chat message using AI.
-func (s *Service) Chat(ctx context.Context, userMessage string, stationID *int32, date string, hour string, isGreen *bool) (*ChatResponse, error) {
+func (s *Service) Chat(ctx context.Context, userID int32, userMessage string, stationID *int32, date string, hour string, isGreen *bool) (*ChatResponse, error) {
+	// If Gemini is available, use agentic chat
+	if s.useAgentic && s.geminiProvider != nil {
+		return s.ExecuteAgenticChat(ctx, userMessage, userID, s.geminiProvider)
+	}
+
+	// Fall back to legacy Ollama-based chat
+	return s.legacyChat(ctx, userID, userMessage, stationID, date, hour, isGreen)
+}
+
+// legacyChat provides backward compatibility with Ollama-based chat.
+func (s *Service) legacyChat(ctx context.Context, userID int32, userMessage string, stationID *int32, date string, hour string, isGreen *bool) (*ChatResponse, error) {
 	stations, err := s.queries.ListStations(ctx)
 	if err != nil {
 		return nil, apperrors.ErrInternal
@@ -109,7 +132,7 @@ func (s *Service) Chat(ctx context.Context, userMessage string, stationID *int32
 	}
 
 	if action.Type == "create_reservation" && action.StationID != nil {
-		reservationResp, err := s.createReservationFromAction(ctx, action)
+		reservationResp, err := s.createReservationFromAction(ctx, userID, action)
 		if err != nil {
 			action.Success = false
 			action.Message = "Randevu oluşturulamadı: " + err.Error()
@@ -135,7 +158,7 @@ func (s *Service) Chat(ctx context.Context, userMessage string, stationID *int32
 	}, nil
 }
 
-func (s *Service) createReservationFromAction(ctx context.Context, action *Action) (*reservation.ReservationResponse, error) {
+func (s *Service) createReservationFromAction(ctx context.Context, userID int32, action *Action) (*reservation.ReservationResponse, error) {
 	if action.StationID == nil {
 		return nil, fmt.Errorf("station ID is required")
 	}
@@ -162,7 +185,7 @@ func (s *Service) createReservationFromAction(ctx context.Context, action *Actio
 		IsGreen:   isGreen,
 	}
 
-	return s.reservationSvc.Create(ctx, 0, req)
+	return s.reservationSvc.Create(ctx, userID, req)
 }
 
 func buildSystemPrompt() string {

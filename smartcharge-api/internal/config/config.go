@@ -8,13 +8,15 @@ import (
 )
 
 type Config struct {
-	DatabaseURL string
-	JWTSecret   string
-	Port        string
-	GinMode     string
-	FrontendURL string
-	LLMURL      string
-	LLMModel    string
+	DatabaseURL  string
+	JWTSecret    string
+	Port         string
+	GinMode      string
+	FrontendURL  string
+	LLMURL       string
+	LLMModel     string
+	GeminiAPIKey string
+	GeminiModel  string
 }
 
 func Load() *Config {
@@ -33,13 +35,15 @@ func Load() *Config {
 	}
 
 	cfg := &Config{
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://admin:admin@localhost:5432/evcharge?sslmode=disable"),
-		JWTSecret:   jwtSecret,
-		Port:        getEnv("PORT", "8080"),
-		GinMode:     ginMode,
-		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:3000"),
-		LLMURL:      getEnv("LLM_URL", "http://localhost:11434"),
-		LLMModel:    getEnv("LLM_MODEL", "llama3.2"),
+		DatabaseURL:  getEnv("DATABASE_URL", "postgres://admin:admin@localhost:5432/evcharge?sslmode=disable"),
+		JWTSecret:    jwtSecret,
+		Port:         getEnv("PORT", "8080"),
+		GinMode:      ginMode,
+		FrontendURL:  getEnv("FRONTEND_URL", "http://localhost:3000"),
+		LLMURL:       getEnv("LLM_URL", "http://localhost:11434"),
+		LLMModel:     getEnv("LLM_MODEL", "llama3.2"),
+		GeminiAPIKey: getEnv("GEMINI_API_KEY", ""),
+		GeminiModel:  getEnv("GEMINI_MODEL", "gemini-1.5-flash"),
 	}
 
 	return cfg
