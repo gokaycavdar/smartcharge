@@ -149,7 +149,7 @@ export default function ChatWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 flex h-[600px] w-[400px] flex-col overflow-hidden rounded-2xl border border-slate-600 bg-slate-800 shadow-2xl shadow-black/50 animate-in slide-in-from-bottom-10 fade-in duration-200">
+        <div className="fixed bottom-24 right-6 left-auto z-50 flex h-[500px] w-[calc(100vw-48px)] sm:w-[350px] md:h-[600px] md:w-[400px] flex-col overflow-hidden rounded-2xl border border-slate-600 bg-slate-800 shadow-2xl shadow-black/50 animate-in slide-in-from-bottom-10 fade-in duration-200 max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-120px)]">
           {/* Header */}
           <div className="flex items-center gap-3 border-b border-slate-700 bg-slate-700/50 p-4 backdrop-blur-md">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/20 text-blue-400">
