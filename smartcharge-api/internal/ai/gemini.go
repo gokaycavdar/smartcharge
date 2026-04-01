@@ -178,16 +178,19 @@ func (p *GeminiProvider) callAPI(ctx context.Context, reqBody GeminiRequestBody)
 
 	resp, err := p.client.Do(req)
 	if err != nil {
+		fmt.Printf("[ERROR] Gemini API HTTP error: %v (type: %T)\n", err, err)
 		return nil, fmt.Errorf("failed to call Gemini API: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		fmt.Printf("[ERROR] Failed to read Gemini response body: %v\n", err)
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("[ERROR] Gemini API returned status %d: %s\n", resp.StatusCode, string(body))
 		return nil, &AIError{
 			Code:    "GEMINI_API_ERROR",
 			Message: fmt.Sprintf("status %d: %s", resp.StatusCode, string(body)),
@@ -196,15 +199,18 @@ func (p *GeminiProvider) callAPI(ctx context.Context, reqBody GeminiRequestBody)
 
 	var geminiResp GeminiResponse
 	if err := json.Unmarshal(body, &geminiResp); err != nil {
+		fmt.Printf("[ERROR] Failed to parse Gemini response: %v\nResponse body: %s\n", err, string(body))
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	if len(geminiResp.Candidates) == 0 {
+		fmt.Println("[ERROR] No candidates in Gemini response")
 		return nil, fmt.Errorf("no candidates in response")
 	}
 
 	candidate := geminiResp.Candidates[0]
 	if len(candidate.Content.Parts) == 0 {
+		fmt.Println("[ERROR] No content parts in Gemini response")
 		return nil, fmt.Errorf("no content parts in response")
 	}
 

@@ -13,8 +13,6 @@ type Config struct {
 	Port         string
 	GinMode      string
 	FrontendURL  string
-	LLMURL       string
-	LLMModel     string
 	GeminiAPIKey string
 	GeminiModel  string
 }
@@ -40,8 +38,6 @@ func Load() *Config {
 		Port:         getEnv("PORT", "8080"),
 		GinMode:      ginMode,
 		FrontendURL:  getEnv("FRONTEND_URL", "http://localhost:3000"),
-		LLMURL:       getEnv("LLM_URL", "http://localhost:11434"),
-		LLMModel:     getEnv("LLM_MODEL", "llama3.2"),
 		GeminiAPIKey: getEnv("GEMINI_API_KEY", ""),
 		GeminiModel:  getEnv("GEMINI_MODEL", "gemini-1.5-flash"),
 	}

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"smartcharge-api/internal/ai"
-	apperrors "smartcharge-api/internal/errors"
 	"smartcharge-api/internal/reservation"
 )
 
@@ -115,7 +114,7 @@ func (s *Service) defineTools() []ai.ToolFunctionDeclaration {
 func (s *Service) executeSearchStations(ctx context.Context, args map[string]interface{}) (interface{}, error) {
 	stations, err := s.queries.ListStations(ctx)
 	if err != nil {
-		return nil, apperrors.ErrInternal
+		return nil, fmt.Errorf("failed to list stations: %w", err)
 	}
 
 	results := make([]StationSearchResult, 0)

@@ -10,7 +10,6 @@ import (
 	"smartcharge-api/db/generated"
 	"smartcharge-api/internal/ai"
 	"smartcharge-api/internal/config"
-	apperrors "smartcharge-api/internal/errors"
 	"smartcharge-api/internal/reservation"
 )
 
@@ -18,34 +17,26 @@ import (
 type Service struct {
 	queries        *generated.Queries
 	reservationSvc *reservation.Service
-	provider       ai.Provider
 	geminiProvider *ai.GeminiProvider
 	systemPrompt   string
-	useAgentic     bool
 }
 
 // NewService creates a new chat service.
 func NewService(queries *generated.Queries, reservationSvc *reservation.Service, cfg *config.Config) *Service {
-	provider := ai.NewOllamaProvider(cfg.LLMURL, cfg.LLMModel)
-
-	// Initialize Gemini provider if API key is provided
-	var geminiProvider *ai.GeminiProvider
-	useAgentic := false
-	if cfg.GeminiAPIKey != "" {
-		fmt.Printf("[DEBUG] Initializing Gemini provider with model: %s\n", cfg.GeminiModel)
-		geminiProvider = ai.NewGeminiProvider(cfg.GeminiAPIKey, cfg.GeminiModel)
-		useAgentic = true
-	} else {
-		fmt.Println("[DEBUG] Gemini API key not configured, using Ollama fallback")
+	// Gemini provider is required - will panic if API key is not provided
+	if cfg.GeminiAPIKey == "" {
+		fmt.Println("[ERROR] GEMINI_API_KEY environment variable is required but not set!")
+		panic("GEMINI_API_KEY is required for chat service")
 	}
+
+	fmt.Printf("[DEBUG] Initializing Gemini provider with model: %s\n", cfg.GeminiModel)
+	geminiProvider := ai.NewGeminiProvider(cfg.GeminiAPIKey, cfg.GeminiModel)
 
 	return &Service{
 		queries:        queries,
 		reservationSvc: reservationSvc,
-		provider:       provider,
 		geminiProvider: geminiProvider,
 		systemPrompt:   buildSystemPrompt(),
-		useAgentic:     useAgentic,
 	}
 }
 
@@ -88,77 +79,12 @@ type ChatResponse struct {
 	Action          *Action                  `json:"action,omitempty"`
 }
 
-// Chat processes a chat message using AI.
+// Chat processes a chat message using AI (Gemini only).
 func (s *Service) Chat(ctx context.Context, userID int32, userMessage string, stationID *int32, date string, hour string, isGreen *bool) (*ChatResponse, error) {
-	// If Gemini is available, use agentic chat
-	if s.useAgentic && s.geminiProvider != nil {
-		return s.ExecuteAgenticChat(ctx, userMessage, userID, s.geminiProvider)
-	}
+	fmt.Printf("[DEBUG] Chat request: userID=%d, message='%s'\n", userID, userMessage)
+	fmt.Println("[DEBUG] Using Gemini API for agentic chat")
 
-	// Fall back to legacy Ollama-based chat
-	return s.legacyChat(ctx, userID, userMessage, stationID, date, hour, isGreen)
-}
-
-// legacyChat provides backward compatibility with Ollama-based chat.
-func (s *Service) legacyChat(ctx context.Context, userID int32, userMessage string, stationID *int32, date string, hour string, isGreen *bool) (*ChatResponse, error) {
-	stations, err := s.queries.ListStations(ctx)
-	if err != nil {
-		return nil, apperrors.ErrInternal
-	}
-
-	stationContext := buildStationContext(stations)
-
-	messages := []ai.Message{
-		{Role: ai.RoleSystem, Content: s.systemPrompt},
-		{Role: ai.RoleUser, Content: userMessage + "\n\n" + stationContext},
-	}
-
-	llmResp, err := s.provider.Complete(ctx, messages,
-		ai.WithTemperature(0.7),
-		ai.WithMaxTokens(800),
-	)
-	if err != nil {
-		return &ChatResponse{
-			Role:    "bot",
-			Content: "Üzgünüm, şu anda AI servisine bağlanamıyorum. Lütfen daha sonra tekrar dene.",
-		}, nil
-	}
-
-	content := llmResp.Content
-
-	action, content, err := parseAction(content)
-	if err != nil {
-		return &ChatResponse{
-			Role:    "bot",
-			Content: content,
-		}, nil
-	}
-
-	if action.Type == "create_reservation" && action.StationID != nil {
-		reservationResp, err := s.createReservationFromAction(ctx, userID, action)
-		if err != nil {
-			action.Success = false
-			action.Message = "Randevu oluşturulamadı: " + err.Error()
-		} else {
-			action.Success = true
-			action.Message = "Randevun başarıyla oluşturuldu!"
-			action.Reservation = &ReservationActionResponse{
-				ID:          reservationResp.ID,
-				StationID:   reservationResp.StationID,
-				Date:        reservationResp.Date,
-				Hour:        reservationResp.Hour,
-				EarnedCoins: reservationResp.EarnedCoins,
-				Status:      reservationResp.Status,
-			}
-			content = fmt.Sprintf("Randevun başarıyla oluşturuldu! 🎉\n\n%s", content)
-		}
-	}
-
-	return &ChatResponse{
-		Role:    "bot",
-		Content: content,
-		Action:  action,
-	}, nil
+	return s.ExecuteAgenticChat(ctx, userMessage, userID, s.geminiProvider)
 }
 
 func (s *Service) createReservationFromAction(ctx context.Context, userID int32, action *Action) (*reservation.ReservationResponse, error) {

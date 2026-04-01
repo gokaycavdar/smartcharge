@@ -80,14 +80,23 @@ export default function ChatWidget() {
     setIsLoading(true);
 
     try {
+      console.log("[ChatWidget] Sending message to /api/chat:", userMessage);
       const res = await authFetch("/api/chat", {
         method: "POST",
         body: JSON.stringify({ message: userMessage }),
       });
 
-      if (!res.ok) throw new Error("Failed to fetch");
+      console.log("[ChatWidget] Response status:", res.status, res.statusText);
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("[ChatWidget] API error response:", errText);
+        throw new Error(`API error ${res.status}: ${errText}`);
+      }
 
       const data = await unwrapResponse<{ role: string; content: string; recommendations?: Recommendation[] }>(res);
+      console.log("[ChatWidget] Got response data:", data);
+      
       setMessages((prev) => [
         ...prev,
         {
@@ -97,9 +106,14 @@ export default function ChatWidget() {
         },
       ]);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Bilinmeyen hata";
+      console.error("[ChatWidget] Error:", errorMessage);
       setMessages((prev) => [
         ...prev,
-        { role: "bot", content: "Üzgünüm, şu an bağlantı kuramıyorum. Lütfen tekrar dene." },
+        { 
+          role: "bot", 
+          content: `Üzgünüm, bir hata oluştu: ${errorMessage}. Lütfen tekrar dene.` 
+        },
       ]);
     } finally {
       setIsLoading(false);
