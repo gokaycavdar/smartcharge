@@ -319,7 +319,7 @@ func (s *Service) convertMessagesToGemini(messages []ai.Message) []ai.GeminiMess
 	for i, msg := range messages {
 		geminiMessages[i] = ai.GeminiMessage{
 			Role: string(msg.Role),
-			Content: []ai.GeminiTextContent{
+			Parts: []ai.GeminiTextContent{
 				{Text: msg.Content},
 			},
 		}
