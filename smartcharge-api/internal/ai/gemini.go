@@ -47,8 +47,8 @@ type Tool struct {
 
 // GeminiMessage represents a message in Gemini format.
 type GeminiMessage struct {
-	Role    string      `json:"role"`
-	Content interface{} `json:"content"`
+	Role  string              `json:"role"`
+	Parts []GeminiTextContent `json:"parts"`
 }
 
 // GeminiTextContent represents text content in Gemini format.
@@ -75,10 +75,10 @@ type GeminiContentPart struct {
 
 // GeminiRequestBody represents the request body for Gemini API.
 type GeminiRequestBody struct {
-	Contents         []GeminiMessage        `json:"contents"`
-	Tools            []Tool                 `json:"tools,omitempty"`
-	SystemPrompt     string                 `json:"systemPrompt,omitempty"`
-	GenerationConfig map[string]interface{} `json:"generationConfig,omitempty"`
+	SystemInstruction map[string]interface{} `json:"system_instruction,omitempty"`
+	Contents          []GeminiMessage        `json:"contents"`
+	Tools             []Tool                 `json:"tools,omitempty"`
+	GenerationConfig  map[string]interface{} `json:"generationConfig,omitempty"`
 }
 
 // GeminiResponseContent represents content in Gemini response.
@@ -123,7 +123,7 @@ func (p *GeminiProvider) CompleteWithTools(
 	for i, msg := range messages {
 		geminiMessages[i] = GeminiMessage{
 			Role: string(msg.Role),
-			Content: []GeminiTextContent{
+			Parts: []GeminiTextContent{
 				{Text: msg.Content},
 			},
 		}
@@ -137,10 +137,18 @@ func (p *GeminiProvider) CompleteWithTools(
 		}
 	}
 
+	// Build system instruction
+	systemInstruction := make(map[string]interface{})
+	if systemPrompt != "" {
+		systemInstruction["parts"] = []map[string]string{
+			{"text": systemPrompt},
+		}
+	}
+
 	reqBody := GeminiRequestBody{
-		Contents:     geminiMessages,
-		Tools:        toolsArray,
-		SystemPrompt: systemPrompt,
+		SystemInstruction: systemInstruction,
+		Contents:          geminiMessages,
+		Tools:             toolsArray,
 		GenerationConfig: map[string]interface{}{
 			"temperature":     options.Temperature,
 			"maxOutputTokens": options.MaxTokens,
@@ -167,6 +175,8 @@ func (p *GeminiProvider) callAPI(ctx context.Context, reqBody GeminiRequestBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
+
+	fmt.Printf("[DEBUG] Gemini request JSON: %s\n", string(reqJSON))
 
 	url := fmt.Sprintf("%s/%s:generateContent?key=%s", p.baseURL, p.model, p.apiKey)
 
