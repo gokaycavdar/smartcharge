@@ -102,6 +102,26 @@ type GeminiResponse struct {
 	} `json:"usageMetadata"`
 }
 
+// convertRoleToGemini converts internal role to Gemini API format
+func convertRoleToGemini(role string) string {
+	switch role {
+	case "user":
+		return "USER"
+	case "assistant":
+		return "MODEL"
+	default:
+		return role
+	}
+}
+
+// min returns minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 // CompleteWithTools calls the Gemini API with function calling support.
 func (p *GeminiProvider) CompleteWithTools(
 	ctx context.Context,
@@ -121,8 +141,10 @@ func (p *GeminiProvider) CompleteWithTools(
 	// Convert messages to Gemini format
 	geminiMessages := make([]GeminiMessage, len(messages))
 	for i, msg := range messages {
+		geminiRole := convertRoleToGemini(string(msg.Role))
+		fmt.Printf("[DEBUG] Converting role '%s' -> '%s' for message: %s\n", msg.Role, geminiRole, msg.Content[:min(50, len(msg.Content))])
 		geminiMessages[i] = GeminiMessage{
-			Role: string(msg.Role),
+			Role: geminiRole,
 			Parts: []GeminiTextContent{
 				{Text: msg.Content},
 			},
