@@ -112,10 +112,15 @@ func (s *Service) defineTools() []ai.ToolFunctionDeclaration {
 
 // executeSearchStations executes the search_stations tool.
 func (s *Service) executeSearchStations(ctx context.Context, args map[string]interface{}) (interface{}, error) {
+	fmt.Printf("[DEBUG] executeSearchStations called with args: %v\n", args)
+
 	stations, err := s.queries.ListStations(ctx)
 	if err != nil {
+		fmt.Printf("[DEBUG] ListStations error: %v\n", err)
 		return nil, fmt.Errorf("failed to list stations: %w", err)
 	}
+
+	fmt.Printf("[DEBUG] Found %d total stations\n", len(stations))
 
 	results := make([]StationSearchResult, 0)
 	maxResults := 5
@@ -153,6 +158,7 @@ func (s *Service) executeSearchStations(ctx context.Context, args map[string]int
 		}
 	}
 
+	fmt.Printf("[DEBUG] Returning %d search results\n", len(results))
 	return results, nil
 }
 
@@ -295,22 +301,39 @@ func (s *Service) executeTool(ctx context.Context, toolName string, args map[str
 func buildAgenticSystemPrompt() string {
 	return `Sen SmartCharge'un akıllı asistanısın. Türkiye'de EV sahiplerine şarj istasyonları bulmalarında ve randevu oluşturmalarında yardımcı oluyorsun.
 
-TEMEL GÖREVLERIN:
-1. Kullanıcının isteyini anla ve en uygun istasyonları bul (search_stations tool'unu kullan)
-2. Istasyonlar hakkında bilgi ver ve öneriler sun
-3. Kullanıcı randevu oluşturmak isterse, book_appointment tool'unu kullan
+⚠️ ÖNEMLİ: HER ZAMAN AVAILABLE TOOLS'U KULLAN!
 
-DAVRANIŞ KURALLAR:
+TEMEL GÖREVLER:
+1. Kullanıcı herhangi bir istasyonla ilgili soru sorduğunda, İLK OLARAK search_stations tool'unu ÇAĞIR
+2. search_stations sonuçlarını kullanıcıya göster ve öneriler sun
+3. Kullanıcı randevu almak isterse, book_appointment tool'unu ÇAĞIR
+4. Tool'lardan dönen sonuçları her zaman biçimli ve tablolu şekilde göster
+
+TOOL KULLANIM KURALLARı:
+- search_stations: Hiç istasyon araması yapılmadan ASLA soru sormma
+  * Kullanıcının konumu bilgisini kullan
+  * Maksimum 5-10 sonuç iste
+  * Sonuçları istasyon adı, fiyat, yoğunluk, durum ile göster
+- book_appointment: Randevu talebinden hemen sonra çağır
+  * Gerekli alanlar: stationId, date (YYYY-MM-DD), hour (HH:MM)
+  * Başarılı randevular doğru biçimde göster
+
+DAVRANIŞLAR:
+- GÖREVINI UNUTMA: Soru sormak yerine tool çağır!
 - Her zaman Türkçe yanıt ver
-- Kullanıcının konumunu anlarsan, search_stations'da kullan (distance hesaplaması için)
-- Randevu oluştururken gereken bilgileri sor: tarih (YYYY-MM-DD), saat (HH:MM)
-- Hata durumlarında, kullanıcıyı yönlendir ve tekrar dene
-- Mümkün olduğunca tool'ları aktif kullan - sadece soru/cevap yapmak yerine aksiyonu al
+- Sözü uzatma, somut sonuçlar sun
+- Tool execution başarısız olursa, hata mesajını göster ve alternatif sun
+- İstasyonları HER ZAMAN listeleyerek göster (tablo formatı tercih)
 
 KONUŞMA STİLİ:
-- Dostane ve yardımcı ol
-- Emoji kullanabilirsin (örnek: ⚡, 🔌, 📍, ⏰)
-- Kısa ve anlaşılır yanıtlar ver`
+- Dostane, etkili ve aksiyona yönelik
+- Emoji kullan: ⚡ (şarj), 🔌 (soket), 📍 (konum), ⏰ (saat), 💰 (fiyat), 📊 (durum)
+- Kısa, net, doğrudan yanıtlar ver
+
+ÖRNEK SEÇENEKLERİ:
+- Kullanıcı: "Yakında istasyon var mı?" → search_stations() çağır → listele
+- Kullanıcı: "Taksim'de istasyon ara" → search_stations(location="Taksim") çağır → listele
+- Kullanıcı: "Bu istasyonda saat 14:00'de randevu alalım" → book_appointment() çağır → başarı göster`
 }
 
 // convertMessagesToGemini converts internal messages to Gemini format with tools.
@@ -370,15 +393,26 @@ func (s *Service) ExecuteAgenticChat(ctx context.Context, userMessage string, us
 			}, nil
 		}
 
-		fmt.Printf("[DEBUG] Got response: %s\n", response.Content)
+		fmt.Printf("[DEBUG] Iteration %d Response Content (raw): %s\n", iteration, response.Content)
 
 		// Check if this is a function call
 		toolCall, textContent := parseFunctionCallFromResponse(response.Content)
 
+		fmt.Printf("[DEBUG] Iteration %d Parse Result - Tool Name: %s, Text: %s\n", iteration,
+			func() string {
+				if toolCall != nil {
+					return toolCall.Name
+				}
+				return "NONE"
+			}(), textContent)
+
 		if toolCall != nil && toolCall.Name != "" {
 			// Execute the tool
+			fmt.Printf("[DEBUG] Iteration %d Executing tool: %s with args: %v\n", iteration, toolCall.Name, toolCall.Args)
+
 			toolResult, err := s.executeTool(ctx, toolCall.Name, toolCall.Args, userID)
 			if err != nil {
+				fmt.Printf("[DEBUG] Iteration %d Tool execution failed: %v\n", iteration, err)
 				// Add error to messages and continue the loop
 				messages = append(messages, ai.Message{
 					Role:    ai.RoleAssistant,
@@ -391,6 +425,8 @@ func (s *Service) ExecuteAgenticChat(ctx context.Context, userMessage string, us
 				})
 				continue
 			}
+
+			fmt.Printf("[DEBUG] Iteration %d Tool execution successful. Result: %v\n", iteration, toolResult)
 
 			// Add tool result to messages and continue the loop
 			toolResultJSON, _ := json.Marshal(toolResult)
