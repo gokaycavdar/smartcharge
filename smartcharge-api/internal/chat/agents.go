@@ -337,6 +337,7 @@ KONUŞMA STİLİ:
 }
 
 // convertMessagesToGemini converts internal messages to Gemini format with tools.
+// (Kept for compatibility, but conversion now happens in gemini.go)
 func (s *Service) convertMessagesToGemini(messages []ai.Message) []ai.GeminiMessage {
 	geminiMessages := make([]ai.GeminiMessage, len(messages))
 	for i, msg := range messages {
@@ -348,15 +349,6 @@ func (s *Service) convertMessagesToGemini(messages []ai.Message) []ai.GeminiMess
 		}
 	}
 	return geminiMessages
-}
-
-// parseFunctionCallFromResponse parses a function call from Gemini response.
-func parseFunctionCallFromResponse(content string) (*ai.GeminiFunctionCall, string) {
-	var call ai.GeminiFunctionCall
-	if err := json.Unmarshal([]byte(content), &call); err == nil && call.Name != "" {
-		return &call, ""
-	}
-	return nil, content
 }
 
 // ExecuteAgenticChat runs the agentic chat loop with Gemini API.
@@ -395,8 +387,14 @@ func (s *Service) ExecuteAgenticChat(ctx context.Context, userMessage string, us
 
 		fmt.Printf("[DEBUG] Iteration %d Response Content (raw): %s\n", iteration, response.Content)
 
-		// Check if this is a function call
-		toolCall, textContent := parseFunctionCallFromResponse(response.Content)
+		// Check if this is a function call (now directly from Response.FunctionCall)
+		var toolCall *ai.FunctionCall
+		textContent := response.Content
+
+		if response.FunctionCall != nil {
+			toolCall = response.FunctionCall
+			fmt.Printf("[DEBUG] Iteration %d Found direct function call: name=%s, args=%v\n", iteration, toolCall.Name, toolCall.Args)
+		}
 
 		fmt.Printf("[DEBUG] Iteration %d Parse Result - Tool Name: %s, Text: %s\n", iteration,
 			func() string {
@@ -414,9 +412,10 @@ func (s *Service) ExecuteAgenticChat(ctx context.Context, userMessage string, us
 			if err != nil {
 				fmt.Printf("[DEBUG] Iteration %d Tool execution failed: %v\n", iteration, err)
 				// Add error to messages and continue the loop
+				toolCallJSON, _ := json.Marshal(toolCall)
 				messages = append(messages, ai.Message{
 					Role:    ai.RoleAssistant,
-					Content: fmt.Sprintf(`{"name": "%s", "args": %v}`, toolCall.Name, toolCall.Args),
+					Content: string(toolCallJSON),
 				})
 
 				messages = append(messages, ai.Message{
@@ -430,9 +429,10 @@ func (s *Service) ExecuteAgenticChat(ctx context.Context, userMessage string, us
 
 			// Add tool result to messages and continue the loop
 			toolResultJSON, _ := json.Marshal(toolResult)
+			toolCallJSON, _ := json.Marshal(toolCall)
 			messages = append(messages, ai.Message{
 				Role:    ai.RoleAssistant,
-				Content: fmt.Sprintf(`{"name": "%s", "args": %v}`, toolCall.Name, toolCall.Args),
+				Content: string(toolCallJSON),
 			})
 
 			messages = append(messages, ai.Message{

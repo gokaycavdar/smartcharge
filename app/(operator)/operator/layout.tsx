@@ -4,6 +4,7 @@ import React from 'react';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Zap, Megaphone, Settings, LogOut } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function OperatorLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -67,6 +68,9 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
         </nav>
 
         <div className="mt-auto pt-4 border-t border-white/5">
+            <div className="mb-2">
+              <ThemeToggle />
+            </div>
             <Link href="/" className="group flex items-center gap-3 p-3 hover:bg-red-500/10 text-text-secondary hover:text-red-400 rounded-xl transition-all font-medium">
             <LogOut size={20} className="group-hover:text-red-400 transition-colors" /> <span className="hidden lg:block">Çıkış</span>
             </Link>

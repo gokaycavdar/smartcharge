@@ -102,6 +102,12 @@ type GeminiResponse struct {
 	} `json:"usageMetadata"`
 }
 
+// ResponseWithFunctionCall wraps both text and function call information
+type ResponseWithFunctionCall struct {
+	Text         string
+	FunctionCall *GeminiFunctionCall
+}
+
 // convertRoleToGemini converts internal role to Gemini API format
 func convertRoleToGemini(role string) string {
 	switch role {
@@ -246,24 +252,27 @@ func (p *GeminiProvider) callAPI(ctx context.Context, reqBody GeminiRequestBody)
 		return nil, fmt.Errorf("no content parts in response")
 	}
 
-	// Extract text content from the first part
+	// Extract text content or function call from the parts
 	content := ""
+	var functionCall *FunctionCall
+
 	for _, part := range candidate.Content.Parts {
 		if part.Text != "" {
 			content = part.Text
-			break
+			fmt.Printf("[DEBUG] Found text content: %s\n", content[:min(100, len(content))])
 		}
 		if part.FunctionCall != nil {
-			// For function calls, we'll return them as JSON in the content
-			// The caller will parse this
-			jsonBytes, _ := json.Marshal(part.FunctionCall)
-			content = string(jsonBytes)
-			break
+			fmt.Printf("[DEBUG] Found function call: name=%s, args=%v\n", part.FunctionCall.Name, part.FunctionCall.Args)
+			functionCall = &FunctionCall{
+				Name: part.FunctionCall.Name,
+				Args: part.FunctionCall.Args,
+			}
 		}
 	}
 
 	return &Response{
-		Content: content,
+		Content:      content,
+		FunctionCall: functionCall,
 		Usage: Usage{
 			PromptTokens:     geminiResp.UsageMetadata.PromptTokenCount,
 			CompletionTokens: geminiResp.UsageMetadata.CandidatesTokenCount,

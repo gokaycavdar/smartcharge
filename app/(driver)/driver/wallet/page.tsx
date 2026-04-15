@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Award, Coins, Leaf, Loader2, Sparkles, Trophy, Users } from "lucide-react";
 import Link from "next/link";
-import { authFetch, unwrapResponse, getStoredUserId } from "@/lib/auth";
+import { authFetch, unwrapResponse, getStoredUserId, getToken } from "@/lib/auth";
 import { useGeolocation } from "@/lib/useGeolocation";
 
 type Badge = {
@@ -68,6 +69,7 @@ type ScoredStation = {
 };
 
 export default function DriverWalletPage() {
+	const router = useRouter();
 	const [user, setUser] = useState<UserPayload | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -82,9 +84,14 @@ export default function DriverWalletPage() {
 	const geo = useGeolocation();
 
 	useEffect(() => {
+		const token = getToken();
 		const userId = getStoredUserId();
+		if (!token) {
+			router.push("/");
+			return;
+		}
 		if (!userId) {
-			setError("Önce giriş yapmalısınız.");
+			setError("Kullanici oturumu bulunamadi. Lutfen tekrar giris yapin.");
 			setIsLoading(false);
 			return;
 		}
@@ -106,7 +113,7 @@ export default function DriverWalletPage() {
 
 		loadUser();
 		return () => controller.abort();
-	}, []);
+	}, [router]);
 
 	// Fetch leaderboard when tab switches to leaderboard
 	useEffect(() => {

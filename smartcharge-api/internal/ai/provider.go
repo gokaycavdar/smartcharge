@@ -27,9 +27,15 @@ type Options struct {
 }
 
 type Response struct {
-	Content string
-	Usage   Usage
-	Stop    bool
+	Content      string
+	FunctionCall *FunctionCall
+	Usage        Usage
+	Stop         bool
+}
+
+type FunctionCall struct {
+	Name string                 `json:"name"`
+	Args map[string]interface{} `json:"args"`
 }
 
 type Usage struct {

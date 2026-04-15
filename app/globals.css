@@ -34,6 +34,30 @@
   --bg-gradient: radial-gradient(circle at top center, #1e293b 0%, #0B0E14 100%);
 }
 
+:root[data-theme="light"] {
+  --bg-primary: 241 245 249;
+  --bg-surface-1: 255 255 255;
+  --bg-surface-2: 248 250 252;
+  --bg-surface-3: 226 232 240;
+
+  --text-primary: 15 23 42;
+  --text-secondary: 51 65 85;
+  --text-tertiary: 100 116 139;
+
+  --border-primary: 203 213 225;
+  --border-highlight: 14 165 233;
+
+  --accent-primary: 2 132 199;
+  --accent-secondary: 37 99 235;
+  --accent-hover: 3 105 161;
+  --accent-glow: 2 132 199;
+
+  --status-success: 22 163 74;
+  --status-warning: 217 119 6;
+  --status-error: 220 38 38;
+  --status-info: 37 99 235;
+}
+
 @layer base {
   html {
     font-family: 'Inter', sans-serif;
@@ -46,6 +70,20 @@
       radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
       radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
     min-height: 100vh;
+  }
+
+  :root[data-theme="light"] body {
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.06) 0%, transparent 45%),
+      radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.04) 0%, transparent 40%);
+  }
+
+  :root[data-theme="light"] .text-white {
+    color: rgb(var(--text-primary)) !important;
+  }
+
+  :root[data-theme="light"] .hover\:text-white:hover {
+    color: rgb(var(--text-primary)) !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
