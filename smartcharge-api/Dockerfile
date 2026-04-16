@@ -16,7 +16,7 @@ COPY . .
 RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
 # Generate SQLC code from queries
-RUN ~/go/bin/sqlc generate -f db/sqlc.yaml
+RUN /go/bin/sqlc generate -f db/sqlc.yaml
 
 # Build static binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/server
