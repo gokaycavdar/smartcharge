@@ -13,18 +13,15 @@ import ThemeToggle from "@/components/ThemeToggle";
 export default function DriverLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isLoading, setIsLoading] = React.useState(true);
+  const token = getToken();
 
   useEffect(() => {
-    const token = getToken();
     if (!token) {
       router.push("/");
-    } else {
-      setIsLoading(false);
     }
-  }, [router]);
+  }, [router, token]);
 
-  if (isLoading) {
+  if (!token) {
     return (
       <div className="flex h-screen items-center justify-center bg-primary-bg">
         <Loader2 className="h-8 w-8 animate-spin text-accent-primary" />

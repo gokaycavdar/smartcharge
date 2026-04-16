@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 const THEME_KEY = "smartcharge:theme";
@@ -14,16 +14,11 @@ function applyTheme(theme: Theme) {
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem(THEME_KEY) : null;
-    const initial: Theme = saved === "light" ? "light" : "dark";
-    setTheme(initial);
-    applyTheme(initial);
-    setMounted(true);
-  }, []);
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "dark";
+    const saved = localStorage.getItem(THEME_KEY);
+    return saved === "light" ? "light" : "dark";
+  });
 
   const toggleTheme = () => {
     const next: Theme = theme === "dark" ? "light" : "dark";
@@ -33,12 +28,6 @@ export default function ThemeToggle() {
       localStorage.setItem(THEME_KEY, next);
     }
   };
-
-  if (!mounted) {
-    return (
-      <div className="h-10 rounded-xl border border-white/10 bg-surface-1/50 px-3" />
-    );
-  }
 
   return (
     <button
