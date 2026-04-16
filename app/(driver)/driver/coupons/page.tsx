@@ -145,7 +145,7 @@ export default function CouponPage() {
 						</div>
 						<h1 className="mt-2 text-4xl font-bold text-white tracking-tight font-display">Kupon Merkezi</h1>
 						<p className="mt-2 max-w-2xl text-text-secondary">
-							Biriktirdigin SmartCoin'leri sarj indirim kuponlarina donustur.
+							Biriktirdigin SmartCoin&apos;leri sarj indirim kuponlarina donustur.
 						</p>
 					</div>
 					<Link
