@@ -86,7 +86,7 @@ export function CouponCard({
 
 				{!canBuy && (
 					<p className="text-xs text-red-600 mt-2 text-center">
-						Bu kuponu almak için daha fazla SmartCoin'e ihtiyacınız var.
+						Bu kuponu almak icin daha fazla SmartCoin&apos;e ihtiyaciniz var.
 					</p>
 				)}
 			</div>
