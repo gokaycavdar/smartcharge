@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"smartcharge-api/db/generated"
@@ -186,6 +187,97 @@ func (s *Service) GetUserActiveCoupons(ctx context.Context, userID int32) (*Acti
 	return &ActiveCouponsResponse{
 		TotalActive: int32(len(userCoupons)),
 		Coupons:     userCoupons,
+	}, nil
+}
+
+// GetUserCouponHistory returns all coupons created by user using SmartCoin
+func (s *Service) GetUserCouponHistory(ctx context.Context, userID int32) (*CouponHistoryResponse, error) {
+	const query = `SELECT uc.id,
+	       uc.coupon_id,
+	       uc.code,
+	       CASE
+	           WHEN uc.status = 'USED' THEN 'USED'
+	           WHEN uc.expires_at <= NOW() THEN 'EXPIRED'
+	           ELSE 'ACTIVE'
+	       END AS status,
+	       uc.created_at,
+	       uc.expires_at,
+	       cc.name,
+	       cc.discount_type,
+	       cc.discount_value,
+	       cc.icon
+	FROM user_coupons uc
+	JOIN coupon_catalog cc ON cc.id = uc.coupon_id
+	WHERE uc.user_id = $1
+	ORDER BY uc.created_at DESC`
+
+	rows, err := s.pool.Query(ctx, query, userID)
+	if err != nil {
+		return nil, apperrors.ErrInternal
+	}
+	defer rows.Close()
+
+	coupons := make([]UserCoupon, 0)
+	for rows.Next() {
+		var (
+			id            int32
+			couponID      int32
+			code          string
+			status        string
+			createdAt     pgtype.Timestamptz
+			expiresAt     pgtype.Timestamptz
+			name          string
+			discountType  string
+			discountValue float64
+			icon          string
+		)
+
+		if err := rows.Scan(
+			&id,
+			&couponID,
+			&code,
+			&status,
+			&createdAt,
+			&expiresAt,
+			&name,
+			&discountType,
+			&discountValue,
+			&icon,
+		); err != nil {
+			return nil, apperrors.ErrInternal
+		}
+
+		createdAtStr := ""
+		if createdAt.Valid {
+			createdAtStr = createdAt.Time.UTC().Format(time.RFC3339)
+		}
+
+		expiresAtStr := ""
+		if expiresAt.Valid {
+			expiresAtStr = expiresAt.Time.UTC().Format(time.RFC3339)
+		}
+
+		coupons = append(coupons, UserCoupon{
+			ID:            id,
+			CouponID:      couponID,
+			Name:          name,
+			DiscountType:  discountType,
+			DiscountValue: discountValue,
+			Icon:          icon,
+			Status:        status,
+			Code:          code,
+			ExpiresAt:     expiresAtStr,
+			CreatedAt:     createdAtStr,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, apperrors.ErrInternal
+	}
+
+	return &CouponHistoryResponse{
+		TotalCoupons: int32(len(coupons)),
+		Coupons:      coupons,
 	}, nil
 }
 

@@ -76,20 +76,23 @@ type UserCoupon struct {
 }
 
 type Reservation struct {
-	ID          int32              `json:"id"`
-	UserID      int32              `json:"user_id"`
-	StationID   int32              `json:"station_id"`
-	Date        pgtype.Timestamptz `json:"date"`
-	Hour        string             `json:"hour"`
-	IsGreen     bool               `json:"is_green"`
-	EarnedCoins int32              `json:"earned_coins"`
-	SavedCo2    float64            `json:"saved_co2"`
-	Status      string             `json:"status"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	ConfirmedAt pgtype.Timestamptz `json:"confirmed_at"`
-	StartedAt   pgtype.Timestamptz `json:"started_at"`
-	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+	ID            int32              `json:"id"`
+	UserID        int32              `json:"user_id"`
+	StationID     int32              `json:"station_id"`
+	Date          pgtype.Timestamptz `json:"date"`
+	Hour          string             `json:"hour"`
+	IsGreen       bool               `json:"is_green"`
+	EarnedCoins   int32              `json:"earned_coins"`
+	SavedCo2      float64            `json:"saved_co2"`
+	Status        string             `json:"status"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	ConfirmedAt   pgtype.Timestamptz `json:"confirmed_at"`
+	StartedAt     pgtype.Timestamptz `json:"started_at"`
+	CompletedAt   pgtype.Timestamptz `json:"completed_at"`
+	CheckedInAt   pgtype.Timestamptz `json:"checked_in_at"`
+	CheckInMethod pgtype.Text        `json:"check_in_method"`
+	NoShowAt      pgtype.Timestamptz `json:"no_show_at"`
 }
 
 type Station struct {
@@ -103,6 +106,7 @@ type Station struct {
 	OwnerID        pgtype.Int4 `json:"owner_id"`
 	DensityProfile string      `json:"density_profile"`
 	Capacity       int32       `json:"capacity"`
+	QrSecret       string      `json:"qr_secret"`
 }
 
 type StationDensityForecast struct {

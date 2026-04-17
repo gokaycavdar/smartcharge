@@ -48,10 +48,16 @@ type RedeemResponse = {
 	message: string;
 };
 
+type CouponHistoryResponse = {
+	totalCoupons: number;
+	coupons: UserCoupon[];
+};
+
 export default function CouponPage() {
 	const router = useRouter();
 	const [userCoins, setUserCoins] = useState<number>(0);
 	const [coupons, setCoupons] = useState<Coupon[]>([]);
+	const [userCoupons, setUserCoupons] = useState<UserCoupon[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [redeemingId, setRedeemingId] = useState<number | null>(null);
@@ -70,10 +76,21 @@ export default function CouponPage() {
 
 		const loadCoupons = async () => {
 			try {
-				const response = await authFetch("/api/coupons/list");
-				const data = await unwrapResponse<CouponListResponse>(response);
-				setUserCoins(data.userCoins);
-				setCoupons(data.availableCoupons);
+				const catalogResponse = await authFetch("/api/coupons/list");
+				const catalogData = await unwrapResponse<CouponListResponse>(catalogResponse);
+
+				let historyCoupons: UserCoupon[] = [];
+				try {
+					const historyResponse = await authFetch("/api/coupons/history");
+					const historyData = await unwrapResponse<CouponHistoryResponse>(historyResponse);
+					historyCoupons = historyData.coupons;
+				} catch (historyErr) {
+					console.warn("Coupon history unavailable, continuing without it:", historyErr);
+				}
+
+				setUserCoins(catalogData.userCoins);
+				setCoupons(catalogData.availableCoupons);
+				setUserCoupons(historyCoupons);
 				setError(null);
 			} catch (err) {
 				console.error("Failed to load coupons:", err);
@@ -103,6 +120,7 @@ export default function CouponPage() {
 
 				// Update UI
 				setUserCoins(data.remainingCoins);
+				setUserCoupons((prev) => [data.userCoupon, ...prev]);
 				setToastMessage({
 					type: "success",
 					message: data.message,
@@ -132,6 +150,39 @@ export default function CouponPage() {
 		},
 		[]
 	);
+
+	const getCouponDiscountLabel = (coupon: UserCoupon) => {
+		if (coupon.discountType === "percentage") {
+			return `%${coupon.discountValue} indirim`;
+		}
+		return `${coupon.discountValue} TL indirim`;
+	};
+
+	const getStatusLabel = (status: string) => {
+		switch (status) {
+			case "ACTIVE":
+				return "Aktif";
+			case "USED":
+				return "Kullanildi";
+			case "EXPIRED":
+				return "Suresi Doldu";
+			default:
+				return status;
+		}
+	};
+
+	const getStatusClassName = (status: string) => {
+		switch (status) {
+			case "ACTIVE":
+				return "border-emerald-400/30 bg-emerald-500/10 text-emerald-300";
+			case "USED":
+				return "border-sky-400/30 bg-sky-500/10 text-sky-300";
+			case "EXPIRED":
+				return "border-zinc-400/30 bg-zinc-500/10 text-zinc-300";
+			default:
+				return "border-white/20 bg-white/10 text-white";
+		}
+	};
 
 	return (
 		<main className="min-h-screen bg-primary-bg text-primary relative overflow-hidden font-sans pb-20">
@@ -204,6 +255,47 @@ export default function CouponPage() {
 				{!isLoading && coupons.length === 0 && !error && (
 					<div className="text-center py-12">
 						<p className="text-secondary">Şu anda uygun kupon bulunmamaktadır.</p>
+					</div>
+				)}
+
+				{!isLoading && userCoupons.length > 0 && (
+					<div className="mt-12">
+						<h2 className="text-2xl font-bold text-primary mb-6">Olusturdugun Kuponlar</h2>
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							{userCoupons.map((coupon) => (
+								<div
+									key={coupon.id}
+									className="rounded-2xl border border-white/10 bg-surface-1 p-5 shadow-lg shadow-black/10"
+								>
+									<div className="flex items-start justify-between gap-3">
+										<div className="flex items-center gap-3">
+											<span className="text-3xl leading-none">{coupon.icon}</span>
+											<div>
+												<p className="font-semibold text-white">{coupon.name}</p>
+												<p className="text-sm text-text-secondary">{getCouponDiscountLabel(coupon)}</p>
+											</div>
+										</div>
+										<span
+											className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${getStatusClassName(coupon.status)}`}
+										>
+											{getStatusLabel(coupon.status)}
+										</span>
+									</div>
+
+									<div className="mt-4 space-y-1 text-xs text-text-secondary">
+										<p>Kod: <span className="font-mono text-white tracking-wide">{coupon.code}</span></p>
+										<p>Olusturma: {new Date(coupon.createdAt).toLocaleString("tr-TR")}</p>
+										<p>Son kullanim: {new Date(coupon.expiresAt).toLocaleString("tr-TR")}</p>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				)}
+
+				{!isLoading && userCoupons.length === 0 && !error && (
+					<div className="mt-12 rounded-2xl border border-white/10 bg-surface-1 p-6 text-center">
+						<p className="text-text-secondary">Henüz SmartCoin ile olusturdugun kupon yok.</p>
 					</div>
 				)}
 				</div>

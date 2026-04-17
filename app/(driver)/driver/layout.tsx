@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useSyncExternalStore } from 'react';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,13 +13,26 @@ import ThemeToggle from "@/components/ThemeToggle";
 export default function DriverLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const token = getToken();
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  const token = isClient ? getToken() : null;
 
   useEffect(() => {
-    if (!token) {
+    if (isClient && !token) {
       router.push("/");
     }
-  }, [router, token]);
+  }, [router, token, isClient]);
+
+  if (!isClient) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-primary-bg">
+        <Loader2 className="h-8 w-8 animate-spin text-accent-primary" />
+      </div>
+    );
+  }
 
   if (!token) {
     return (

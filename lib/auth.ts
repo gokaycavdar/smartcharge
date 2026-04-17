@@ -80,12 +80,23 @@ export async function authFetch(
  * Throws an Error with the backend's error message on failure.
  */
 export async function unwrapResponse<T>(res: Response): Promise<T> {
-  const json: ApiResponse<T> = await res.json();
+	const raw = await res.text();
 
-  if (!json.success || !res.ok) {
-    const msg = json.error?.message || `Request failed with status ${res.status}`;
-    throw new Error(msg);
-  }
+	let json: ApiResponse<T>;
+	try {
+		json = JSON.parse(raw) as ApiResponse<T>;
+	} catch {
+		const fallback = raw.trim().slice(0, 180);
+		const msg = fallback
+			? `API returned non-JSON response (${res.status}): ${fallback}`
+			: `API returned non-JSON response (${res.status})`;
+		throw new Error(msg);
+	}
+
+	if (!json.success || !res.ok) {
+		const msg = json.error?.message || `Request failed with status ${res.status}`;
+		throw new Error(msg);
+	}
 
   return json.data;
 }

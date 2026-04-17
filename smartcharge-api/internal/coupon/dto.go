@@ -53,3 +53,9 @@ type ActiveCouponsResponse struct {
 	TotalActive int32        `json:"totalActive"`
 	Coupons     []UserCoupon `json:"coupons"`
 }
+
+// CouponHistoryResponse is a list of all coupons the user created with SmartCoin
+type CouponHistoryResponse struct {
+	TotalCoupons int32        `json:"totalCoupons"`
+	Coupons      []UserCoupon `json:"coupons"`
+}

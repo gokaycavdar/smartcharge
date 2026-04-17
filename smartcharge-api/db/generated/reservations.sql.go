@@ -15,7 +15,7 @@ const completeReservation = `-- name: CompleteReservation :one
 UPDATE reservations
 SET status = 'COMPLETED', earned_coins = $2, saved_co2 = $3, completed_at = NOW()
 WHERE id = $1
-RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at
+RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at, checked_in_at, check_in_method, no_show_at
 `
 
 type CompleteReservationParams struct {
@@ -42,6 +42,9 @@ func (q *Queries) CompleteReservation(ctx context.Context, arg CompleteReservati
 		&i.ConfirmedAt,
 		&i.StartedAt,
 		&i.CompletedAt,
+		&i.CheckedInAt,
+		&i.CheckInMethod,
+		&i.NoShowAt,
 	)
 	return i, err
 }
@@ -50,7 +53,7 @@ const confirmReservation = `-- name: ConfirmReservation :one
 UPDATE reservations
 SET status = 'CONFIRMED', confirmed_at = NOW()
 WHERE id = $1
-RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at
+RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at, checked_in_at, check_in_method, no_show_at
 `
 
 func (q *Queries) ConfirmReservation(ctx context.Context, id int32) (Reservation, error) {
@@ -71,6 +74,9 @@ func (q *Queries) ConfirmReservation(ctx context.Context, id int32) (Reservation
 		&i.ConfirmedAt,
 		&i.StartedAt,
 		&i.CompletedAt,
+		&i.CheckedInAt,
+		&i.CheckInMethod,
+		&i.NoShowAt,
 	)
 	return i, err
 }
@@ -80,7 +86,7 @@ SELECT COUNT(*)::int FROM reservations
 WHERE station_id = $1
   AND date::date = $2::date
   AND hour = $3
-  AND status NOT IN ('CANCELLED', 'FAILED')
+  AND status NOT IN ('CANCELLED', 'FAILED', 'NO_SHOW')
 `
 
 type CountActiveReservationsParams struct {
@@ -99,7 +105,7 @@ func (q *Queries) CountActiveReservations(ctx context.Context, arg CountActiveRe
 const createReservation = `-- name: CreateReservation :one
 INSERT INTO reservations (user_id, station_id, date, hour, is_green, earned_coins, status)
 VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
-RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at
+RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at, checked_in_at, check_in_method, no_show_at
 `
 
 type CreateReservationParams struct {
@@ -136,6 +142,9 @@ func (q *Queries) CreateReservation(ctx context.Context, arg CreateReservationPa
 		&i.ConfirmedAt,
 		&i.StartedAt,
 		&i.CompletedAt,
+		&i.CheckedInAt,
+		&i.CheckInMethod,
+		&i.NoShowAt,
 	)
 	return i, err
 }
@@ -144,7 +153,7 @@ const failReservation = `-- name: FailReservation :one
 UPDATE reservations
 SET status = 'FAILED'
 WHERE id = $1
-RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at
+RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at, checked_in_at, check_in_method, no_show_at
 `
 
 func (q *Queries) FailReservation(ctx context.Context, id int32) (Reservation, error) {
@@ -165,12 +174,15 @@ func (q *Queries) FailReservation(ctx context.Context, id int32) (Reservation, e
 		&i.ConfirmedAt,
 		&i.StartedAt,
 		&i.CompletedAt,
+		&i.CheckedInAt,
+		&i.CheckInMethod,
+		&i.NoShowAt,
 	)
 	return i, err
 }
 
 const getReservationByID = `-- name: GetReservationByID :one
-SELECT id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at FROM reservations WHERE id = $1
+SELECT id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at, checked_in_at, check_in_method, no_show_at FROM reservations WHERE id = $1
 `
 
 func (q *Queries) GetReservationByID(ctx context.Context, id int32) (Reservation, error) {
@@ -191,6 +203,9 @@ func (q *Queries) GetReservationByID(ctx context.Context, id int32) (Reservation
 		&i.ConfirmedAt,
 		&i.StartedAt,
 		&i.CompletedAt,
+		&i.CheckedInAt,
+		&i.CheckInMethod,
+		&i.NoShowAt,
 	)
 	return i, err
 }
@@ -237,7 +252,7 @@ WHERE user_id = $1
   AND station_id = $2
   AND date::date = $3::date
   AND hour = $4
-  AND status NOT IN ('CANCELLED', 'FAILED', 'COMPLETED')
+  AND status NOT IN ('CANCELLED', 'FAILED', 'COMPLETED', 'NO_SHOW')
 `
 
 type HasActiveReservationParams struct {
@@ -260,7 +275,7 @@ func (q *Queries) HasActiveReservation(ctx context.Context, arg HasActiveReserva
 }
 
 const listReservationsByStation = `-- name: ListReservationsByStation :many
-SELECT id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at FROM reservations
+SELECT id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at, checked_in_at, check_in_method, no_show_at FROM reservations
 WHERE station_id = $1
 ORDER BY id DESC
 `
@@ -289,6 +304,9 @@ func (q *Queries) ListReservationsByStation(ctx context.Context, stationID int32
 			&i.ConfirmedAt,
 			&i.StartedAt,
 			&i.CompletedAt,
+			&i.CheckedInAt,
+			&i.CheckInMethod,
+			&i.NoShowAt,
 		); err != nil {
 			return nil, err
 		}
@@ -304,7 +322,7 @@ const startCharging = `-- name: StartCharging :one
 UPDATE reservations
 SET status = 'CHARGING', started_at = NOW()
 WHERE id = $1
-RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at
+RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at, checked_in_at, check_in_method, no_show_at
 `
 
 func (q *Queries) StartCharging(ctx context.Context, id int32) (Reservation, error) {
@@ -325,6 +343,9 @@ func (q *Queries) StartCharging(ctx context.Context, id int32) (Reservation, err
 		&i.ConfirmedAt,
 		&i.StartedAt,
 		&i.CompletedAt,
+		&i.CheckedInAt,
+		&i.CheckInMethod,
+		&i.NoShowAt,
 	)
 	return i, err
 }
@@ -333,7 +354,7 @@ const updateReservationStatus = `-- name: UpdateReservationStatus :one
 UPDATE reservations
 SET status = $2
 WHERE id = $1
-RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at
+RETURNING id, user_id, station_id, date, hour, is_green, earned_coins, saved_co2, status, created_at, updated_at, confirmed_at, started_at, completed_at, checked_in_at, check_in_method, no_show_at
 `
 
 type UpdateReservationStatusParams struct {
@@ -359,6 +380,9 @@ func (q *Queries) UpdateReservationStatus(ctx context.Context, arg UpdateReserva
 		&i.ConfirmedAt,
 		&i.StartedAt,
 		&i.CompletedAt,
+		&i.CheckedInAt,
+		&i.CheckInMethod,
+		&i.NoShowAt,
 	)
 	return i, err
 }

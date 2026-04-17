@@ -31,6 +31,9 @@ func RegisterRoutes(engine *gin.Engine, handler *Handler, authMiddleware gin.Han
 
 		// GET /v1/coupons/active - Get user's active coupons
 		coupons.GET("/active", handler.GetUserActiveCoupons)
+
+		// GET /v1/coupons/history - Get all coupons created by user
+		coupons.GET("/history", handler.GetUserCouponHistory)
 	}
 }
 
@@ -114,6 +117,26 @@ func (h *Handler) GetUserActiveCoupons(c *gin.Context) {
 
 	// Get active coupons
 	result, err := h.service.GetUserActiveCoupons(c.Request.Context(), userIDInt32)
+	if err != nil {
+		response.Err(c, http.StatusInternalServerError, "internal_error", err.Error())
+		return
+	}
+
+	response.OK(c, result)
+}
+
+// GetUserCouponHistory handles GET /v1/coupons/history
+// Returns all coupons created by the user (active, used, expired)
+func (h *Handler) GetUserCouponHistory(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		response.Err(c, http.StatusUnauthorized, "auth_required", "Authentication required")
+		return
+	}
+
+	userIDInt32 := userID.(int32)
+
+	result, err := h.service.GetUserCouponHistory(c.Request.Context(), userIDInt32)
 	if err != nil {
 		response.Err(c, http.StatusInternalServerError, "internal_error", err.Error())
 		return

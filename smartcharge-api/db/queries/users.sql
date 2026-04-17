@@ -48,12 +48,20 @@ ORDER BY id ASC;
 -- name: GetUserReservations :many
 SELECT r.id, r.date, r.hour, r.is_green, r.earned_coins, r.status,
        r.confirmed_at, r.started_at, r.completed_at,
+       r.checked_in_at, r.check_in_method, r.no_show_at,
        s.id AS station_id, s.name AS station_name, s.price AS station_price
 FROM reservations r
 JOIN stations s ON s.id = r.station_id
 WHERE r.user_id = $1
 ORDER BY r.id DESC
 LIMIT $2;
+
+-- name: MarkUserPendingReservationsNoShow :exec
+UPDATE reservations
+SET status = 'NO_SHOW', no_show_at = NOW(), updated_at = NOW()
+WHERE user_id = $1
+  AND status = 'PENDING'
+  AND (NOW() AT TIME ZONE 'Europe/Istanbul') > (((date AT TIME ZONE 'Europe/Istanbul')::date + hour::time) + INTERVAL '10 minutes');
 
 -- name: GetDemoUser :one
 SELECT id, name, email, role FROM users WHERE email = 'driver@test.com';
