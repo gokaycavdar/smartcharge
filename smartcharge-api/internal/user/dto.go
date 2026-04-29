@@ -58,16 +58,19 @@ type StationItem struct {
 
 // ReservationItem is a reservation with station info for the profile.
 type ReservationItem struct {
-	ID          int32              `json:"id"`
-	Date        string             `json:"date"`
-	Hour        string             `json:"hour"`
-	IsGreen     bool               `json:"isGreen"`
-	EarnedCoins int32              `json:"earnedCoins"`
-	Status      string             `json:"status"`
-	ConfirmedAt *string            `json:"confirmedAt,omitempty"`
-	StartedAt   *string            `json:"startedAt,omitempty"`
-	CompletedAt *string            `json:"completedAt,omitempty"`
-	Station     ReservationStation `json:"station"`
+	ID            int32              `json:"id"`
+	Date          string             `json:"date"`
+	Hour          string             `json:"hour"`
+	IsGreen       bool               `json:"isGreen"`
+	EarnedCoins   int32              `json:"earnedCoins"`
+	Status        string             `json:"status"`
+	ConfirmedAt   *string            `json:"confirmedAt,omitempty"`
+	StartedAt     *string            `json:"startedAt,omitempty"`
+	CompletedAt   *string            `json:"completedAt,omitempty"`
+	CheckedInAt   *string            `json:"checkedInAt,omitempty"`
+	CheckInMethod *string            `json:"checkInMethod,omitempty"`
+	NoShowAt      *string            `json:"noShowAt,omitempty"`
+	Station       ReservationStation `json:"station"`
 }
 
 // ReservationStation is the station info nested in a reservation.

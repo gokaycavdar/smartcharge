@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Zap, Megaphone, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Zap, Megaphone, Settings, LogOut, Store, TicketPercent } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function OperatorLayout({ children }: { children: React.ReactNode }) {
@@ -53,6 +53,28 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
           >
             <Zap size={20} className={pathname === "/operator/stations" ? "text-accent-primary" : "group-hover:text-accent-primary transition-colors"} /> 
             <span className="hidden lg:block">İstasyonlar</span>
+          </Link>
+          <Link 
+            href="/operator/store" 
+            className={`group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 font-medium ${
+              pathname === "/operator/store" 
+                ? "bg-accent-primary/10 text-accent-primary shadow-sm ring-1 ring-accent-primary/20" 
+                : "text-text-secondary hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <Store size={20} className={pathname === "/operator/store" ? "text-accent-primary" : "group-hover:text-accent-primary transition-colors"} /> 
+            <span className="hidden lg:block">Magaza</span>
+          </Link>
+          <Link 
+            href="/operator/coupons" 
+            className={`group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 font-medium ${
+              pathname === "/operator/coupons" 
+                ? "bg-accent-primary/10 text-accent-primary shadow-sm ring-1 ring-accent-primary/20" 
+                : "text-text-secondary hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <TicketPercent size={20} className={pathname === "/operator/coupons" ? "text-accent-primary" : "group-hover:text-accent-primary transition-colors"} /> 
+            <span className="hidden lg:block">Kuponlar</span>
           </Link>
           <Link 
             href="/operator/settings" 

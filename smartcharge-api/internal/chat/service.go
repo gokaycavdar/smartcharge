@@ -2,14 +2,14 @@ package chat
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strings"
+	"sync"
 	"time"
 
 	"smartcharge-api/db/generated"
 	"smartcharge-api/internal/ai"
 	"smartcharge-api/internal/config"
+	"smartcharge-api/internal/recommend"
 	"smartcharge-api/internal/reservation"
 )
 
@@ -17,16 +17,17 @@ import (
 type Service struct {
 	queries        *generated.Queries
 	reservationSvc *reservation.Service
+	recommendSvc   *recommend.Service
 	geminiProvider *ai.GeminiProvider
-	systemPrompt   string
+	quotaStateMu   sync.RWMutex
+	quotaBlockedTo time.Time
 }
 
 // NewService creates a new chat service.
-func NewService(queries *generated.Queries, reservationSvc *reservation.Service, cfg *config.Config) *Service {
+func NewService(queries *generated.Queries, reservationSvc *reservation.Service, recommendSvc *recommend.Service, cfg *config.Config) *Service {
 	// Gemini provider is required - will panic if API key is not provided
 	if cfg.GeminiAPIKey == "" {
 		fmt.Println("[ERROR] GEMINI_API_KEY environment variable is required but not set!")
-		panic("GEMINI_API_KEY is required for chat service")
 	}
 
 	fmt.Printf("[DEBUG] Initializing Gemini provider with model: %s\n", cfg.GeminiModel)
@@ -35,8 +36,8 @@ func NewService(queries *generated.Queries, reservationSvc *reservation.Service,
 	return &Service{
 		queries:        queries,
 		reservationSvc: reservationSvc,
+		recommendSvc:   recommendSvc,
 		geminiProvider: geminiProvider,
-		systemPrompt:   buildSystemPrompt(),
 	}
 }
 
@@ -52,14 +53,26 @@ type RecommendationResponse struct {
 
 // Action represents an action to take based on user intent.
 type Action struct {
-	Type        string                     `json:"type"` // "create_reservation", "none"
+	Type        string                     `json:"type"`
+	Label       string                     `json:"label,omitempty"`
 	StationID   *int32                     `json:"stationId,omitempty"`
 	Date        string                     `json:"date,omitempty"`
 	Hour        string                     `json:"hour,omitempty"`
 	IsGreen     *bool                      `json:"isGreen,omitempty"`
-	Success     bool                       `json:"success"`
+	URL         string                     `json:"url,omitempty"`
+	Style       string                     `json:"style,omitempty"`
+	Success     bool                       `json:"success,omitempty"`
 	Message     string                     `json:"message,omitempty"`
 	Reservation *ReservationActionResponse `json:"reservation,omitempty"`
+}
+
+type ChatCard struct {
+	Type        string    `json:"type"`
+	Title       string    `json:"title"`
+	Subtitle    string    `json:"subtitle,omitempty"`
+	Description string    `json:"description,omitempty"`
+	Badges      []string  `json:"badges,omitempty"`
+	Actions     []*Action `json:"actions,omitempty"`
 }
 
 type ReservationActionResponse struct {
@@ -76,15 +89,21 @@ type ChatResponse struct {
 	Role            string                   `json:"role"`
 	Content         string                   `json:"content"`
 	Recommendations []RecommendationResponse `json:"recommendations,omitempty"`
+	Cards           []ChatCard               `json:"cards,omitempty"`
+	QuickActions    []*Action                `json:"quickActions,omitempty"`
 	Action          *Action                  `json:"action,omitempty"`
 }
 
 // Chat processes a chat message using AI (Gemini only).
 func (s *Service) Chat(ctx context.Context, userID int32, userMessage string, stationID *int32, date string, hour string, isGreen *bool) (*ChatResponse, error) {
 	fmt.Printf("[DEBUG] Chat request: userID=%d, message='%s'\n", userID, userMessage)
-	fmt.Println("[DEBUG] Using Gemini API for agentic chat")
+	fmt.Println("[DEBUG] Using Gemini API with function calling")
 
-	return s.ExecuteAgenticChat(ctx, userMessage, userID, s.geminiProvider)
+	if stationID != nil || date != "" || hour != "" || isGreen != nil {
+		userMessage = fmt.Sprintf("%s\n\nEk bağlam: stationId=%v, date=%s, hour=%s", userMessage, stationID, date, hour)
+	}
+
+	return s.ExecuteAgenticChat(ctx, userMessage, userID)
 }
 
 func (s *Service) createReservationFromAction(ctx context.Context, userID int32, action *Action) (*reservation.ReservationResponse, error) {
@@ -99,7 +118,7 @@ func (s *Service) createReservationFromAction(ctx context.Context, userID int32,
 
 	hourStr := action.Hour
 	if hourStr == "" {
-		hourStr = "20:00"
+		hourStr = defaultBookingHour()
 	}
 
 	isGreen := false
@@ -117,72 +136,76 @@ func (s *Service) createReservationFromAction(ctx context.Context, userID int32,
 	return s.reservationSvc.Create(ctx, userID, req)
 }
 
-func buildSystemPrompt() string {
-	return "Sen SmartCharge'un yapay zeka asistanısın. EV sahiplerine şarj istasyonları hakkında yardımcı oluyorsun.\n\n" +
-		"YETENEKLERİN:\n" +
-		"1. Şarj istasyonu önerme: Kullanıcının ihtiyaçlarına göre en uygun istasyonları önerebilirsin\n" +
-		"2. Randevu oluşturma: Kullanıcı randevu oluşturmak isterse, aşağıdaki JSON formatında bir action döndürmen gerekir\n\n" +
-		"KURALLAR:\n" +
-		"- Her zaman Türkçe yanıt ver\n" +
-		"- Yanıtında JSON formatında bir \"action\" objesi döndür\n" +
-		"- Eğer kullanıcı randevu oluşturmak İSTEMİYORSA, action.type = \"none\" olmalı\n" +
-		"- Eğer kullanıcı randevu oluşturmak İSTİYORSA, action.type = \"create_reservation\" ve gerekli bilgileri doldur\n\n" +
-		"ACTION JSON FORMATI:\n" +
-		"```json\n" +
-		"{\n" +
-		"  \"type\": \"create_reservation\" veya \"none\",\n" +
-		"  \"stationId\": (opsiyonel, istasyon ID),\n" +
-		"  \"date\": (opsiyonel, YYYY-MM-DD formatında tarih),\n" +
-		"  \"hour\": (opsiyonel, HH:MM formatında saat),\n" +
-		"  \"isGreen\": (opsiyonel, yeşil enerji tercihi)\n" +
-		"}\n" +
-		"```\n\n" +
-		"ÖRNEKLER:\n" +
-		"- Kullanıcı: \"Yarın saat 20:00'de Kadıköy Şarj istasyonunda randevu istiyorum\"\n" +
-		"  -> action: {\"type\": \"create_reservation\", \"stationId\": 1, \"date\": \"2026-03-05\", \"hour\": \"20:00\", \"isGreen\": false}\n\n" +
-		"- Kullanıcı: \"En yakın şarj istasyonunu öner\"\n" +
-		"  -> action: {\"type\": \"none\"}\n\n" +
-		"ÖNEMLİ: Yanıtının sonunda mutlaka geçerli bir JSON action objesi olmalı. Yanıtını bu formatta bitir: [ACTION]...[/ACTION]"
+func defaultBookingHour() string {
+	now := time.Now()
+	next := now.Add(1 * time.Hour)
+	return fmt.Sprintf("%02d:00", next.Hour())
 }
 
-func buildStationContext(stations []generated.ListStationsRow) string {
-	var sb strings.Builder
-	sb.WriteString("\n\nMEVCUT İSTASYONLAR:\n")
-
-	limit := 10
-	if len(stations) < limit {
-		limit = len(stations)
-	}
-
-	for i := 0; i < limit; i++ {
-		st := stations[i]
-		sb.WriteString(fmt.Sprintf("- ID: %d, İsim: %s, Fiyat: %.2f TL/kWh\n",
-			st.ID, st.Name, st.Price))
-	}
-
-	sb.WriteString("\nİstasyon ID'lerini yukarıdaki listeden al.")
-	return sb.String()
+func (s *Service) isGeminiTemporarilyBlocked() bool {
+	s.quotaStateMu.RLock()
+	defer s.quotaStateMu.RUnlock()
+	return time.Now().Before(s.quotaBlockedTo)
 }
 
-func parseAction(content string) (*Action, string, error) {
-	action := &Action{Type: "none"}
+func (s *Service) markGeminiQuotaBlocked(duration time.Duration) {
+	if duration <= 0 {
+		duration = 5 * time.Minute
+	}
+	s.quotaStateMu.Lock()
+	defer s.quotaStateMu.Unlock()
+	next := time.Now().Add(duration)
+	if next.After(s.quotaBlockedTo) {
+		s.quotaBlockedTo = next
+	}
+}
 
-	start := strings.Index(content, "[ACTION]")
-	end := strings.Index(content, "[/ACTION]")
+func (s *Service) clearGeminiQuotaBlock() {
+	s.quotaStateMu.Lock()
+	s.quotaBlockedTo = time.Time{}
+	s.quotaStateMu.Unlock()
+}
 
-	if start == -1 || end == -1 {
-		cleanContent := strings.TrimSpace(content)
-		return action, cleanContent, nil
+func (s *Service) ExecuteAction(ctx context.Context, userID int32, action *Action) (*Action, error) {
+	if action == nil {
+		return nil, fmt.Errorf("action is required")
 	}
 
-	jsonStr := content[start+8 : end]
-	jsonStr = strings.TrimSpace(jsonStr)
+	switch action.Type {
+	case "create_reservation":
+		reservationResp, err := s.createReservationFromAction(ctx, userID, action)
+		if err != nil {
+			return nil, err
+		}
 
-	if err := json.Unmarshal([]byte(jsonStr), action); err != nil {
-		cleanContent := strings.TrimSpace(content[:start])
-		return action, cleanContent, nil
+		result := &Action{
+			Type:      "create_reservation",
+			Label:     "Rezervasyon Tamamlandi",
+			StationID: &reservationResp.StationID,
+			Date:      reservationResp.Date,
+			Hour:      reservationResp.Hour,
+			Style:     "success",
+			Success:   true,
+			Message:   "Randevun basariyla olusturuldu.",
+			Reservation: &ReservationActionResponse{
+				ID:          reservationResp.ID,
+				StationID:   reservationResp.StationID,
+				Date:        reservationResp.Date,
+				Hour:        reservationResp.Hour,
+				EarnedCoins: reservationResp.EarnedCoins,
+				Status:      reservationResp.Status,
+			},
+		}
+
+		return result, nil
+	case "open_station", "open_appointments", "open_wallet":
+		result := *action
+		result.Success = true
+		if result.Message == "" {
+			result.Message = "Eylem hazir"
+		}
+		return &result, nil
+	default:
+		return nil, fmt.Errorf("unsupported action type: %s", action.Type)
 	}
-
-	cleanContent := strings.TrimSpace(content[:start])
-	return action, cleanContent, nil
 }
