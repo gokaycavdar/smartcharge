@@ -30,12 +30,3 @@ CREATE TABLE user_coupons (
 CREATE INDEX idx_user_coupons_user ON user_coupons (user_id, status);
 CREATE INDEX idx_user_coupons_active ON user_coupons (user_id, status, expires_at);
 CREATE INDEX idx_user_coupons_code ON user_coupons (code);
-
--- Seed: Örnek kupon kataloğu
-INSERT INTO coupon_catalog (name, description, coin_cost, discount_type, discount_value, icon, active)
-VALUES
-    ('%10 İndirim', 'Şarj işleminde %10 indirim', 500, 'percentage', 10, '🎟️', true),
-    ('%20 İndirim', 'Şarj işleminde %20 indirim', 1000, 'percentage', 20, '✨', true),
-    ('50 TL İndirim', 'Şarj işleminde sabit 50 TL indirim', 800, 'fixed', 50, '💳', true),
-    ('100 TL İndirim', 'Şarj işleminde sabit 100 TL indirim', 1500, 'fixed', 100, '💰', true),
-    ('200 TL İndirim', 'Şarj işleminde sabit 200 TL indirim', 2500, 'fixed', 200, '🏆', true);

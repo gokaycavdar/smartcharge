@@ -121,9 +121,8 @@ export default function GlobalAIWidget() {
       // Tab 2: Personalized kampanyalar + AI öneriler
       authFetch("/api/campaigns/for-user").then(res => res.json()).catch(() => ({ success: false })),
       // AI/RL önerileri (chat endpoint)
-      fetch("/api/chat", {
+      authFetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: "En iyi istasyonları öner" })
       }).then(res => res.json()).catch(() => ({ success: false })),
       // RL Scored stations

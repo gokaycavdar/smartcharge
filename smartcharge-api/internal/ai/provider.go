@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"os"
+	"strings"
 )
 
 type Role string
@@ -74,4 +75,15 @@ func GetEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func IsQuotaError(err error) bool {
+	if err == nil {
+		return false
+	}
+	lower := strings.ToLower(err.Error())
+	return strings.Contains(lower, "resource_exhausted") ||
+		strings.Contains(lower, "quota") ||
+		strings.Contains(lower, "429") ||
+		strings.Contains(lower, "rate limit")
 }

@@ -1,5 +1,7 @@
 package coupon
 
+import "time"
+
 // --- Request DTOs ---
 
 // RedeemCouponRequest is the request body for POST /v1/coupons/redeem
@@ -58,4 +60,53 @@ type ActiveCouponsResponse struct {
 type CouponHistoryResponse struct {
 	TotalCoupons int32        `json:"totalCoupons"`
 	Coupons      []UserCoupon `json:"coupons"`
+}
+
+// --- Operator/Admin DTOs ---
+
+type CreateCatalogCouponRequest struct {
+	Name          string  `json:"name" binding:"required"`
+	Description   string  `json:"description"`
+	CoinCost      int32   `json:"coinCost" binding:"required,min=1"`
+	DiscountType  string  `json:"discountType" binding:"required,oneof=percentage fixed"`
+	DiscountValue float64 `json:"discountValue" binding:"required,gt=0"`
+	Icon          string  `json:"icon"`
+	IsActive      *bool   `json:"isActive"`
+}
+
+type UpdateCatalogCouponRequest struct {
+	Name          string   `json:"name"`
+	Description   *string  `json:"description"`
+	CoinCost      *int32   `json:"coinCost"`
+	DiscountType  string   `json:"discountType" binding:"omitempty,oneof=percentage fixed"`
+	DiscountValue *float64 `json:"discountValue"`
+	Icon          *string  `json:"icon"`
+	IsActive      *bool    `json:"isActive"`
+}
+
+type AdminCouponListParams struct {
+	Limit  int32
+	Offset int32
+	Active *bool
+	Search string
+}
+
+type CatalogCoupon struct {
+	ID               int32     `json:"id"`
+	Name             string    `json:"name"`
+	Description      string    `json:"description"`
+	CoinCost         int32     `json:"coinCost"`
+	DiscountType     string    `json:"discountType"`
+	DiscountValue    float64   `json:"discountValue"`
+	Icon             string    `json:"icon"`
+	IsActive         bool      `json:"isActive"`
+	TotalUsageCount  int32     `json:"totalUsageCount"`
+	ActiveUsageCount int32     `json:"activeUsageCount"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
+}
+
+type AdminCouponListResponse struct {
+	Coupons []CatalogCoupon `json:"coupons"`
+	Total   int64           `json:"total"`
 }

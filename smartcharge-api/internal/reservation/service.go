@@ -140,6 +140,23 @@ func (s *Service) Create(ctx context.Context, userID int32, req CreateReservatio
 	}
 	computedIsGreen := isGreenHour(hour)
 
+	dateInTR := reservationDate.In(turkeyLocation)
+	reservationStart := time.Date(
+		dateInTR.Year(),
+		dateInTR.Month(),
+		dateInTR.Day(),
+		int(hour),
+		0,
+		0,
+		0,
+		turkeyLocation,
+	)
+
+	nowTR := time.Now().In(turkeyLocation)
+	if nowTR.After(reservationStart.Add(time.Duration(checkInWindowAfterMins) * time.Minute)) {
+		return nil, apperrors.NewValidationError("Gecmis bir randevu saati secilemez")
+	}
+
 	// Capacity check: verify station has available slots for this date+hour
 	station, err := s.queries.GetStationByID(ctx, req.StationID)
 	if err != nil {

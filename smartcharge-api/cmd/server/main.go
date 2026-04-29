@@ -30,6 +30,7 @@ import (
 	"smartcharge-api/internal/reservation"
 	"smartcharge-api/internal/review"
 	"smartcharge-api/internal/station"
+	"smartcharge-api/internal/store"
 	"smartcharge-api/internal/user"
 )
 
@@ -75,17 +76,17 @@ func main() {
 	badgeService := badge.NewService(queries)
 	campaignService := campaign.NewService(queries)
 	operatorService := operator.NewService(queries)
-	chatService := chat.NewService(queries, reservationService, cfg)
-
 	// Recommend service - uses RL scorer by default
 	rlScorer := recommend.NewRLScorer(queries)
 	recommendService := recommend.NewService(queries, rlScorer)
+	chatService := chat.NewService(queries, reservationService, recommendService, cfg)
 
 	// Review service
 	reviewService := review.NewService(queries)
 
 	// Coupon service
 	couponService := coupon.NewService(queries, pool)
+	storeService := store.NewService(queries, pool)
 
 	// ── Handlers ──────────────────────────────────────────
 	authHandler := auth.NewHandler(authService)
@@ -99,6 +100,7 @@ func main() {
 	demoUserHandler := demouser.NewHandler(queries)
 	reviewHandler := review.NewHandler(reviewService)
 	couponHandler := coupon.NewHandler(couponService)
+	storeHandler := store.NewHandler(storeService)
 
 	// ── Router ────────────────────────────────────────────
 	router := gin.Default()
@@ -117,10 +119,11 @@ func main() {
 	badgeHandler.RegisterRoutes(v1, authMiddleware)
 	campaignHandler.RegisterRoutes(v1, authMiddleware)
 	operatorHandler.RegisterRoutes(v1, authMiddleware)
-	chatHandler.RegisterRoutes(v1)
+	chatHandler.RegisterRoutes(v1, authMiddleware)
 	demoUserHandler.RegisterRoutes(v1)
 	reviewHandler.RegisterRoutes(v1, authMiddleware)
 	coupon.RegisterRoutes(router, couponHandler, authMiddleware)
+	storeHandler.RegisterRoutes(v1, authMiddleware)
 
 	// Health check
 	router.GET("/health", func(c *gin.Context) {

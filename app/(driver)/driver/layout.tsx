@@ -4,7 +4,7 @@ import React, { useEffect, useSyncExternalStore } from 'react';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Map, Calendar, Wallet, LogOut, Zap, Gift, Loader2 } from "lucide-react";
+import { Map, Calendar, Wallet, LogOut, Zap, Gift, Loader2, Store } from "lucide-react";
 import { getToken } from "@/lib/auth";
 import ChatWidget from "@/components/ChatWidget";
 import GlobalAIWidget from "@/components/GlobalAIWidget";
@@ -86,6 +86,17 @@ export default function DriverLayout({ children }: { children: React.ReactNode }
            >
              <Wallet size={20} className={pathname === "/driver/wallet" ? "text-accent-primary" : "group-hover:text-accent-primary transition-colors"} /> 
              <span className="hidden lg:block">Cüzdanım</span>
+           </Link>
+           <Link 
+             href="/driver/store" 
+             className={`group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 font-medium ${
+               pathname === "/driver/store" 
+                 ? "bg-accent-primary/10 text-accent-primary shadow-sm ring-1 ring-accent-primary/20" 
+                 : "text-text-secondary hover:bg-white/5 hover:text-white"
+             }`}
+           >
+             <Store size={20} className={pathname === "/driver/store" ? "text-accent-primary" : "group-hover:text-accent-primary transition-colors"} /> 
+             <span className="hidden lg:block">Magaza</span>
            </Link>
            <Link 
              href="/driver/coupons" 

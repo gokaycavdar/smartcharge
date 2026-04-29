@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -75,7 +76,7 @@ type GeminiContentPart struct {
 
 // GeminiRequestBody represents the request body for Gemini API.
 type GeminiRequestBody struct {
-	SystemInstruction map[string]interface{} `json:"system_instruction,omitempty"`
+	SystemInstruction map[string]interface{} `json:"systemInstruction,omitempty"`
 	Contents          []GeminiMessage        `json:"contents"`
 	Tools             []Tool                 `json:"tools,omitempty"`
 	GenerationConfig  map[string]interface{} `json:"generationConfig,omitempty"`
@@ -112,11 +113,13 @@ type ResponseWithFunctionCall struct {
 func convertRoleToGemini(role string) string {
 	switch role {
 	case "user":
-		return "USER"
+		return "user"
 	case "assistant":
-		return "MODEL"
+		return "model"
+	case "model":
+		return "model"
 	default:
-		return role
+		return "user"
 	}
 }
 
@@ -199,6 +202,10 @@ func (p *GeminiProvider) Stream(ctx context.Context, messages []Message, cb Stre
 
 // callAPI makes the actual HTTP call to Gemini API.
 func (p *GeminiProvider) callAPI(ctx context.Context, reqBody GeminiRequestBody) (*Response, error) {
+	if strings.TrimSpace(p.apiKey) == "" {
+		return nil, &AIError{Code: "GEMINI_API_KEY_MISSING", Message: "Gemini API key is empty"}
+	}
+
 	reqJSON, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
@@ -206,19 +213,51 @@ func (p *GeminiProvider) callAPI(ctx context.Context, reqBody GeminiRequestBody)
 
 	fmt.Printf("[DEBUG] Gemini request JSON: %s\n", string(reqJSON))
 
-	url := fmt.Sprintf("%s/%s:generateContent?key=%s", p.baseURL, p.model, p.apiKey)
+	modelsToTry := p.modelFallbacks()
+	var lastErr error
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqJSON))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
+	for _, model := range modelsToTry {
+		url := fmt.Sprintf("%s/%s:generateContent", p.baseURL, model)
 
-	resp, err := p.client.Do(req)
-	if err != nil {
-		fmt.Printf("[ERROR] Gemini API HTTP error: %v (type: %T)\n", err, err)
-		return nil, fmt.Errorf("failed to call Gemini API: %w", err)
+		req, reqErr := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqJSON))
+		if reqErr != nil {
+			lastErr = fmt.Errorf("failed to create request: %w", reqErr)
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("x-goog-api-key", p.apiKey)
+
+		resp, httpErr := p.client.Do(req)
+		if httpErr != nil {
+			fmt.Printf("[ERROR] Gemini API HTTP error for model %s: %v\n", model, httpErr)
+			lastErr = fmt.Errorf("failed to call Gemini API: %w", httpErr)
+			continue
+		}
+
+		result, parseErr := p.parseResponse(resp)
+		if parseErr == nil {
+			return result, nil
+		}
+
+		if aiErr, ok := parseErr.(*AIError); ok {
+			if shouldTryNextModel(aiErr.Message) {
+				fmt.Printf("[WARN] Gemini model %s unavailable, trying fallback model. Details: %s\n", model, aiErr.Message)
+				lastErr = parseErr
+				continue
+			}
+		}
+
+		return nil, parseErr
 	}
+
+	if lastErr != nil {
+		return nil, lastErr
+	}
+
+	return nil, &AIError{Code: "GEMINI_API_ERROR", Message: "all Gemini model attempts failed"}
+}
+
+func (p *GeminiProvider) parseResponse(resp *http.Response) (*Response, error) {
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
@@ -279,6 +318,36 @@ func (p *GeminiProvider) callAPI(ctx context.Context, reqBody GeminiRequestBody)
 		},
 		Stop: true,
 	}, nil
+}
+
+func (p *GeminiProvider) modelFallbacks() []string {
+	base := strings.TrimSpace(p.model)
+	if strings.HasPrefix(base, "models/") {
+		base = strings.TrimPrefix(base, "models/")
+	}
+	if base == "" {
+		base = "gemini-2.5-flash"
+	}
+
+	candidates := []string{base, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"}
+	seen := map[string]bool{}
+	unique := make([]string, 0, len(candidates))
+	for _, c := range candidates {
+		if c == "" || seen[c] {
+			continue
+		}
+		seen[c] = true
+		unique = append(unique, c)
+	}
+	return unique
+}
+
+func shouldTryNextModel(msg string) bool {
+	lower := strings.ToLower(msg)
+	return strings.Contains(lower, "not found") ||
+		strings.Contains(lower, "unsupported") ||
+		strings.Contains(lower, "not supported") ||
+		strings.Contains(lower, "invalid model")
 }
 
 // ExtractFunctionCalls extracts function calls from the response.
