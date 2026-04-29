@@ -28,7 +28,6 @@ func NewService(queries *generated.Queries, reservationSvc *reservation.Service,
 	// Gemini provider is required - will panic if API key is not provided
 	if cfg.GeminiAPIKey == "" {
 		fmt.Println("[ERROR] GEMINI_API_KEY environment variable is required but not set!")
-		panic("GEMINI_API_KEY is required for chat service")
 	}
 
 	fmt.Printf("[DEBUG] Initializing Gemini provider with model: %s\n", cfg.GeminiModel)
