@@ -1,0 +1,47 @@
+# -- Stage 1: Build ----
+FROM golang:1.25-alpine AS builder
+
+RUN apk add --no-cache git curl
+
+WORKDIR /app
+
+# Cache dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source
+COPY . .
+
+# Install sqlc for code generation
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
+
+# Generate SQLC code from queries
+RUN /go/bin/sqlc generate -f db/sqlc.yaml
+
+# Build release and seed binaries
+RUN CGO_ENABLED=0 GOOS=linux go build -o /release ./cmd/release
+RUN CGO_ENABLED=0 GOOS=linux go build -o /seed ./scripts/seed.go
+
+# -- Stage 2: Runtime ----
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates tzdata curl
+
+# Create non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+# Copy binaries from builder
+COPY --from=builder /release /app/release
+COPY --from=builder /seed /app/seed
+
+# Copy migrations for golang-migrate
+COPY --from=builder /app/db/migrations /app/db/migrations
+
+# Ensure non-root user owns the app directory
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+
+ENTRYPOINT ["/app/release"]
