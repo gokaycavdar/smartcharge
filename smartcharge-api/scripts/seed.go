@@ -17,12 +17,6 @@ import (
 	"smartcharge-api/db/generated"
 )
 
-func mustExec(ctx context.Context, pool *pgxpool.Pool, query string, args ...any) {
-	if _, err := pool.Exec(ctx, query, args...); err != nil {
-		log.Fatalf("SQL failed: %v\nQuery: %s", err, query)
-	}
-}
-
 // ========================================
 // LINEAR REGRESSION DENSITY FORECASTING
 // (Pure Go math — no external library)
@@ -419,27 +413,20 @@ func main() {
 
 	fmt.Println("Seed islemi basliyor...")
 
-	// 1. Clean existing data
+	// 1. Clean existing data (order matters: children first)
 	fmt.Println("Cleaning existing data...")
-	mustExec(ctx, pool, `
-		TRUNCATE TABLE
-			station_reviews,
-			station_density_forecasts,
-			user_coupons,
-			coupon_catalog,
-			purchase_history,
-			store_items,
-			campaign_target_badges,
-			campaigns,
-			reservations,
-			user_badges,
-			badge_progress,
-			badge_criteria,
-			stations,
-			badges,
-			users
-		RESTART IDENTITY CASCADE
-	`)
+	pool.Exec(ctx, "DELETE FROM station_density_forecasts")
+	pool.Exec(ctx, "DELETE FROM user_coupons")
+	pool.Exec(ctx, "DELETE FROM coupon_catalog")
+	pool.Exec(ctx, "DELETE FROM purchase_history")
+	pool.Exec(ctx, "DELETE FROM store_items")
+	pool.Exec(ctx, "DELETE FROM campaign_target_badges")
+	pool.Exec(ctx, "DELETE FROM campaigns")
+	pool.Exec(ctx, "DELETE FROM reservations")
+	pool.Exec(ctx, "DELETE FROM user_badges")
+	pool.Exec(ctx, "DELETE FROM stations")
+	pool.Exec(ctx, "DELETE FROM badges")
+	pool.Exec(ctx, "DELETE FROM users")
 
 	// 2. Create badges
 	fmt.Println("Creating badges...")
@@ -458,8 +445,8 @@ func main() {
 
 	// 2b. Seed badge criteria
 	fmt.Println("Seeding badge criteria...")
-	mustExec(ctx, pool, "DELETE FROM badge_progress")
-	mustExec(ctx, pool, "DELETE FROM badge_criteria")
+	pool.Exec(ctx, "DELETE FROM badge_progress")
+	pool.Exec(ctx, "DELETE FROM badge_criteria")
 	for i, bc := range badgeCriteriaSeeds {
 		_, err := pool.Exec(ctx,
 			"INSERT INTO badge_criteria (badge_id, metric, threshold, time_window) VALUES ($1, $2, $3, 'all_time') ON CONFLICT (badge_id, metric) DO NOTHING",

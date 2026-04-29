@@ -22,6 +22,5 @@ bin/
 # Generated SQLC code is needed (included in source)
 # Migrations are explicitly copied in Dockerfile
 
-# Scripts
-scripts/*
-!scripts/seed.go
+# Scripts (seed runs separately)
+scripts/

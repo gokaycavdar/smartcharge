@@ -27,13 +27,10 @@ jobs:
           cd smartcharge-api
           # Login to Heroku Container registry
           heroku container:login
-          # Build and push the web image
+          # Build and push the Docker image
           heroku container:push web -a smartcharge-api-gc
           # Release the newly pushed image
-          # Build and push the release-phase image
-          heroku container:push release --recursive -a smartcharge-api-gc
-          # Release both images so Heroku runs reset + migrate + seed before booting web
-          heroku container:release web release -a smartcharge-api-gc
+          heroku container:release web -a smartcharge-api-gc
 
   deploy-frontend:
     name: Deploy Next.js Web
