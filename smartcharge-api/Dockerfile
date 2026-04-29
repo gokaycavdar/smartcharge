@@ -13,7 +13,7 @@ RUN go mod download
 COPY . .
 
 # Install sqlc for code generation
-RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
 
 # Generate SQLC code from queries
 RUN /go/bin/sqlc generate -f db/sqlc.yaml
