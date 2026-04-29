@@ -17,8 +17,7 @@ bin/
 # Documentation
 *.md
 
-# SQLC config (not needed at runtime)
-db/sqlc.yaml
+# SQLC config is required in builder stage for code generation
 
 # Generated SQLC code is needed (included in source)
 # Migrations are explicitly copied in Dockerfile

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft, BatteryCharging, Calendar, Clock, Leaf, Loader2,
   Zap, CheckCircle2, X, ShieldCheck, PlayCircle, AlertTriangle,
@@ -8,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
-import { authFetch, unwrapResponse, getStoredUserId } from "@/lib/auth";
+import { authFetch, unwrapResponse, getStoredUserId, getToken } from "@/lib/auth";
 
 type Reservation = {
   id: number;
@@ -66,6 +67,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 export default function AppointmentsPage() {
+  const router = useRouter();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,8 +90,17 @@ export default function AppointmentsPage() {
   };
 
   const loadReservations = useCallback(async () => {
+    const token = getToken();
     const userId = getStoredUserId();
-    if (!userId) return;
+    if (!token) {
+      router.push("/");
+      return;
+    }
+    if (!userId) {
+      setError("Kullanici oturumu bulunamadi. Lutfen tekrar giris yapin.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await authFetch(`/api/users/${userId}`);
@@ -104,17 +115,16 @@ export default function AppointmentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
-    const userId = getStoredUserId();
-    if (!userId) {
-      setError("Önce giriş yapmalısınız.");
-      setIsLoading(false);
+    const token = getToken();
+    if (!token) {
+      router.push("/");
       return;
     }
     loadReservations();
-  }, [loadReservations]);
+  }, [loadReservations, router]);
 
   const handleConfirm = async (id: number) => {
     setActionLoading(id);

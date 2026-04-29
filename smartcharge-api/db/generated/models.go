@@ -51,6 +51,30 @@ type CampaignTargetBadge struct {
 	BadgeID    int32 `json:"badge_id"`
 }
 
+type CouponCatalog struct {
+	ID            int32              `json:"id"`
+	Name          string             `json:"name"`
+	Description   string             `json:"description"`
+	CoinCost      int32              `json:"coin_cost"`
+	DiscountType  string             `json:"discount_type"`
+	DiscountValue float64            `json:"discount_value"`
+	Icon          string             `json:"icon"`
+	Active        bool               `json:"active"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type UserCoupon struct {
+	ID        int32              `json:"id"`
+	UserID    int32              `json:"user_id"`
+	CouponID  int32              `json:"coupon_id"`
+	Status    string             `json:"status"`
+	Code      string             `json:"code"`
+	UsedAt    pgtype.Timestamptz `json:"used_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+}
+
 type Reservation struct {
 	ID          int32              `json:"id"`
 	UserID      int32              `json:"user_id"`

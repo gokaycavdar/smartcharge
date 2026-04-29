@@ -22,6 +22,7 @@ import (
 	"smartcharge-api/internal/campaign"
 	"smartcharge-api/internal/chat"
 	"smartcharge-api/internal/config"
+	"smartcharge-api/internal/coupon"
 	"smartcharge-api/internal/demouser"
 	"smartcharge-api/internal/middleware"
 	"smartcharge-api/internal/operator"
@@ -83,6 +84,9 @@ func main() {
 	// Review service
 	reviewService := review.NewService(queries)
 
+	// Coupon service
+	couponService := coupon.NewService(queries, pool)
+
 	// ── Handlers ──────────────────────────────────────────
 	authHandler := auth.NewHandler(authService)
 	stationHandler := station.NewHandler(stationService, recommendService, queries)
@@ -94,6 +98,7 @@ func main() {
 	chatHandler := chat.NewHandler(chatService)
 	demoUserHandler := demouser.NewHandler(queries)
 	reviewHandler := review.NewHandler(reviewService)
+	couponHandler := coupon.NewHandler(couponService)
 
 	// ── Router ────────────────────────────────────────────
 	router := gin.Default()
@@ -115,6 +120,7 @@ func main() {
 	chatHandler.RegisterRoutes(v1)
 	demoUserHandler.RegisterRoutes(v1)
 	reviewHandler.RegisterRoutes(v1, authMiddleware)
+	coupon.RegisterRoutes(router, couponHandler, authMiddleware)
 
 	// Health check
 	router.GET("/health", func(c *gin.Context) {
