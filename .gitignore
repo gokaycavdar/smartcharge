@@ -43,3 +43,4 @@ next-env.d.ts
 # Go backend
 smartcharge-api/bin/
 smartcharge-api/tmp/
+smartcharge-api/server.exe

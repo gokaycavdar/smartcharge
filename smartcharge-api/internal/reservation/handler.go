@@ -27,6 +27,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup, authMiddleware gin.Handler
 	reservations.POST("", h.Create)
 	reservations.PATCH("/:id", h.UpdateStatus)
 	reservations.POST("/:id/confirm", h.Confirm)
+	reservations.POST("/:id/check-in", h.CheckIn)
 	reservations.POST("/:id/start", h.StartCharging)
 	reservations.POST("/:id/complete", h.Complete)
 }
@@ -118,6 +119,34 @@ func (h *Handler) Confirm(c *gin.Context) {
 		handleError(c, err)
 		return
 	}
+	response.OK(c, result)
+}
+
+// CheckIn handles POST /v1/reservations/:id/check-in.
+func (h *Handler) CheckIn(c *gin.Context) {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
+		response.Err(c, 401, "AUTH_UNAUTHORIZED", "Authentication required")
+		return
+	}
+
+	id, err := parseID(c)
+	if err != nil {
+		return
+	}
+
+	var req CheckInRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Err(c, 400, "VALIDATION_ERROR", "method is required")
+		return
+	}
+
+	result, err := h.service.CheckIn(c.Request.Context(), id, userID, req)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+
 	response.OK(c, result)
 }
 

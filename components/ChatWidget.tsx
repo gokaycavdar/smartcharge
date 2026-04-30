@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { MessageCircle, X, Send, Bot, Zap, Calendar, Loader2 } from "lucide-react";
-import { Card } from "./ui/Card";
-import { authFetch, unwrapResponse, getStoredUserId, getToken } from "@/lib/auth";
+import { authFetch, unwrapResponse } from "@/lib/auth";
 
 type Recommendation = {
   id: number;
@@ -18,9 +18,52 @@ type Message = {
   role: "user" | "bot";
   content: string;
   recommendations?: Recommendation[];
+  cards?: ChatCard[];
+  quickActions?: Action[];
+  action?: Action;
+};
+
+type Action = {
+  type: string;
+  label?: string;
+  stationId?: number;
+  date?: string;
+  hour?: string;
+  isGreen?: boolean;
+  url?: string;
+  style?: string;
+  success?: boolean;
+  message?: string;
+  reservation?: {
+    id: number;
+    stationId: number;
+    date: string;
+    hour: string;
+    earnedCoins: number;
+    status: string;
+  };
+};
+
+type ChatCard = {
+  type: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  badges?: string[];
+  actions?: Action[];
+};
+
+type ChatApiResponse = {
+  role: string;
+  content: string;
+  recommendations?: Recommendation[];
+  cards?: ChatCard[];
+  quickActions?: Action[];
+  action?: Action;
 };
 
 export default function ChatWidget() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -30,6 +73,7 @@ export default function ChatWidget() {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -40,39 +84,8 @@ export default function ChatWidget() {
     scrollToBottom();
   }, [messages, isOpen]);
 
-  const [userId, setUserId] = useState<number | null>(null);
-
-  useEffect(() => {
-    const initUser = async () => {
-      // If JWT token exists, use stored userId
-      const token = getToken();
-      const storedId = getStoredUserId();
-      if (token && storedId) {
-        setUserId(Number.parseInt(storedId, 10));
-        return;
-      }
-
-      // Fallback: demo user when no JWT
-      try {
-        const res = await fetch("/api/demo-user");
-        if (res.ok) {
-          const data = await unwrapResponse<{ id: number }>(res);
-          setUserId(data.id);
-        }
-      } catch (e) {
-        console.error("Failed to sync demo user", e);
-      }
-    };
-    
-    initUser();
-  }, []);
-
   const handleSend = async () => {
     if (!input.trim()) return;
-    if (!userId) {
-      setMessages(prev => [...prev, { role: "bot", content: "Kullanıcı bilgisi yükleniyor, lütfen bekleyin..." }]);
-      return;
-    }
 
     const userMessage = input;
     setInput("");
@@ -80,60 +93,104 @@ export default function ChatWidget() {
     setIsLoading(true);
 
     try {
+      console.log("[ChatWidget] Sending message to /api/chat:", userMessage);
       const res = await authFetch("/api/chat", {
         method: "POST",
         body: JSON.stringify({ message: userMessage }),
       });
 
-      if (!res.ok) throw new Error("Failed to fetch");
+      console.log("[ChatWidget] Response status:", res.status, res.statusText);
 
-      const data = await unwrapResponse<{ role: string; content: string; recommendations?: Recommendation[] }>(res);
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("[ChatWidget] API error response:", errText);
+        throw new Error(`API error ${res.status}: ${errText}`);
+      }
+
+      const data = await unwrapResponse<ChatApiResponse>(res);
+      console.log("[ChatWidget] Got response data:", data);
+      
       setMessages((prev) => [
         ...prev,
         {
           role: "bot",
           content: data.content,
           recommendations: data.recommendations,
+          cards: data.cards,
+          quickActions: data.quickActions,
+          action: data.action,
         },
       ]);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Bilinmeyen hata";
+      console.error("[ChatWidget] Error:", errorMessage);
       setMessages((prev) => [
         ...prev,
-        { role: "bot", content: "Üzgünüm, şu an bağlantı kuramıyorum. Lütfen tekrar dene." },
+        { 
+          role: "bot", 
+          content: `Üzgünüm, bir hata oluştu: ${errorMessage}. Lütfen tekrar dene.` 
+        },
       ]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleBook = async (rec: Recommendation) => {
+  const executeAction = async (action: Action) => {
+    if (action.type.startsWith("open_")) {
+      if (action.url) {
+        router.push(action.url);
+        setIsOpen(false);
+        return;
+      }
+      if (action.stationId) {
+        router.push(`/driver?stationId=${action.stationId}`);
+        setIsOpen(false);
+      }
+      return;
+    }
+
+    if (action.type !== "create_reservation") return;
+
+    setIsActionLoading(true);
     try {
-      const res = await authFetch("/api/reservations", {
+      const res = await authFetch("/api/chat/actions/execute", {
         method: "POST",
         body: JSON.stringify({
-          stationId: rec.id,
-          date: new Date().toISOString(),
-          hour: rec.hour,
-          isGreen: rec.isGreen,
+          type: action.type,
+          label: action.label,
+          stationId: action.stationId,
+          date: action.date,
+          hour: action.hour,
+          isGreen: action.isGreen,
+          url: action.url,
+          style: action.style,
         }),
       });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        alert("Rezervasyon oluşturulamadı: " + (errData.error?.message || "Hata"));
+        alert("Islem basarisiz: " + (errData.error?.message || "Hata"));
         return;
       }
 
-      const data = await unwrapResponse<{ id: number }>(res);
+      const data = await unwrapResponse<Action>(res);
       setMessages((prev) => [
         ...prev,
         {
           role: "bot",
-          content: `Harika! ${rec.name} istasyonunda saat ${rec.hour} için randevun oluşturuldu.`,
+          content: data.message || "Islem tamamlandi.",
+          action: data,
+          quickActions: [
+            { type: "open_appointments", label: "Randevulara Git", url: "/driver/appointments" },
+            { type: "open_station", label: "Istasyonu Ac", stationId: data.stationId, url: data.stationId ? `/driver?stationId=${data.stationId}` : undefined },
+          ],
         },
       ]);
-    } catch (error) {
-      alert("Bir hata oluştu.");
+    } catch {
+      alert("Bir hata olustu.");
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -149,7 +206,7 @@ export default function ChatWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 flex h-[600px] w-[400px] flex-col overflow-hidden rounded-2xl border border-slate-600 bg-slate-800 shadow-2xl shadow-black/50 animate-in slide-in-from-bottom-10 fade-in duration-200">
+        <div className="fixed bottom-24 right-6 left-auto z-50 flex h-[500px] w-[calc(100vw-48px)] sm:w-[350px] md:h-[600px] md:w-[400px] flex-col overflow-hidden rounded-2xl border border-slate-600 bg-slate-800 shadow-2xl shadow-black/50 animate-in slide-in-from-bottom-10 fade-in duration-200 max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-120px)]">
           {/* Header */}
           <div className="flex items-center gap-3 border-b border-slate-700 bg-slate-700/50 p-4 backdrop-blur-md">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/20 text-blue-400">
@@ -178,7 +235,22 @@ export default function ChatWidget() {
                   }`}
                 >
                   <p>{msg.content}</p>
-                  
+
+                  {msg.quickActions && msg.quickActions.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {msg.quickActions.map((action, i) => (
+                        <button
+                          key={`${action.type}-${i}`}
+                          onClick={() => executeAction(action)}
+                          disabled={isActionLoading}
+                          className="rounded-lg border border-blue-500/40 bg-blue-500/10 px-2.5 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-500/20 disabled:opacity-60"
+                        >
+                          {action.label || "Aksiyon"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Recommendations Grid */}
                   {msg.recommendations && (
                     <div className="mt-4 space-y-3">
@@ -199,11 +271,53 @@ export default function ChatWidget() {
                             <span className="text-green-400">{rec.reason}</span>
                           </div>
                           <button
-                            onClick={() => handleBook(rec)}
+                            onClick={() => executeAction({
+                              type: "create_reservation",
+                              label: "Hemen Rezerve Et",
+                              stationId: rec.id,
+                              date: new Date().toISOString().slice(0, 10),
+                              hour: rec.hour,
+                              isGreen: rec.isGreen,
+                            })}
                             className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600/20 py-2 text-xs font-semibold text-blue-400 hover:bg-blue-600 hover:text-white transition-colors"
                           >
                             <Calendar size={12} /> Hemen Rezerve Et
                           </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {msg.cards && msg.cards.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      {msg.cards.map((card, cardIndex) => (
+                        <div key={`${card.type}-${cardIndex}`} className="rounded-xl border border-slate-600 bg-slate-800/60 p-3">
+                          <div className="mb-1 text-xs font-semibold text-white">{card.title}</div>
+                          {card.subtitle && <div className="text-[11px] text-slate-400 mb-1">{card.subtitle}</div>}
+                          {card.description && <div className="text-[11px] text-slate-300 mb-2">{card.description}</div>}
+                          {card.badges && card.badges.length > 0 && (
+                            <div className="mb-2 flex flex-wrap gap-1">
+                              {card.badges.map((badge, i) => (
+                                <span key={`${badge}-${i}`} className="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] text-slate-200">
+                                  {badge}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {card.actions && card.actions.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {card.actions.map((action, i) => (
+                                <button
+                                  key={`${action.type}-${i}`}
+                                  onClick={() => executeAction(action)}
+                                  disabled={isActionLoading}
+                                  className="rounded-lg bg-blue-600/20 px-2.5 py-1.5 text-[11px] font-semibold text-blue-300 hover:bg-blue-600 hover:text-white disabled:opacity-60"
+                                >
+                                  {action.label || "Aksiyon"}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

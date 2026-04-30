@@ -51,6 +51,20 @@ type ReviewSummary = {
   reviewCount: number;
 };
 
+const CHECKIN_GRACE_MINUTES = 10;
+
+function getSlotStartDate(slot: Slot): Date {
+  const datePart = slot.startTime.slice(0, 10); // YYYY-MM-DD
+  const [y, m, d] = datePart.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1, slot.hour, 0, 0, 0);
+}
+
+function isSlotExpired(slot: Slot): boolean {
+  const slotStart = getSlotStartDate(slot);
+  const deadline = new Date(slotStart.getTime() + CHECKIN_GRACE_MINUTES * 60 * 1000);
+  return new Date() > deadline;
+}
+
 export default function DriverDashboardPage() {
   return (
     <Suspense fallback={<div className="flex h-screen items-center justify-center bg-slate-700 text-white">Yükleniyor...</div>}>
@@ -264,6 +278,11 @@ function DriverDashboard() {
         return;
       }
 
+      if (isSlotExpired(slot)) {
+        setToast({ message: "Geçmiş saat seçilemez", detail: "Lütfen gelecekteki bir saat dilimi seçin." });
+        return;
+      }
+
       setIsBooking(true);
 
       try {
@@ -465,18 +484,24 @@ function DriverDashboard() {
                             {groupSlots.map((slot) => (
                               <button
                                 key={slot.hour}
-                                disabled={isBooking}
+                                disabled={isBooking || isSlotExpired(slot)}
                                 onClick={() => handleBooking(slot)}
                                 className={`group relative flex flex-col justify-between rounded-xl border p-3 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
                                   slot.isGreen
                                     ? "border-green-500/40 bg-gradient-to-b from-green-500/20 to-green-900/30 hover:border-green-400 hover:shadow-[0_0_20px_-5px_rgba(34,197,94,0.4)]"
                                     : "border-white/5 bg-surface-1/50 hover:border-white/20 hover:bg-surface-2"
-                                } ${filterMode === "ECO" && !slot.isGreen ? "opacity-50 grayscale" : ""}`}
+                                } ${filterMode === "ECO" && !slot.isGreen ? "opacity-50 grayscale" : ""} ${isSlotExpired(slot) ? "opacity-40 grayscale cursor-not-allowed" : ""}`}
                               >
                                 {slot.isGreen && (
                                   <div className="absolute -right-1 -top-1 h-3 w-3 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
                                 )}
-                                
+
+                                {isSlotExpired(slot) && (
+                                  <span className="absolute right-2 top-2 rounded-full border border-red-500/30 bg-red-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-red-300">
+                                    Gecmis
+                                  </span>
+                                )}
+
                                 <div className="mb-2 flex items-center justify-between">
                                   <span className={`text-sm font-bold ${slot.isGreen ? "text-green-100" : "text-white"}`}>
                                     {slot.label.split(" - ")[0]}

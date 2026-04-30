@@ -17,22 +17,33 @@ type UpdateStatusRequest struct {
 	Status string `json:"status" binding:"required"`
 }
 
+// CheckInRequest is the request body for POST /v1/reservations/:id/check-in.
+type CheckInRequest struct {
+	Method    string  `json:"method" binding:"required"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	QRPayload string  `json:"qrPayload"`
+}
+
 // --- Response DTOs ---
 
 // ReservationResponse is the reservation data returned by create/update endpoints.
 type ReservationResponse struct {
-	ID          int32   `json:"id"`
-	UserID      int32   `json:"userId"`
-	StationID   int32   `json:"stationId"`
-	Date        string  `json:"date"`
-	Hour        string  `json:"hour"`
-	IsGreen     bool    `json:"isGreen"`
-	EarnedCoins int32   `json:"earnedCoins"`
-	SavedCo2    float64 `json:"savedCo2"`
-	Status      string  `json:"status"`
-	ConfirmedAt *string `json:"confirmedAt,omitempty"`
-	StartedAt   *string `json:"startedAt,omitempty"`
-	CompletedAt *string `json:"completedAt,omitempty"`
+	ID            int32   `json:"id"`
+	UserID        int32   `json:"userId"`
+	StationID     int32   `json:"stationId"`
+	Date          string  `json:"date"`
+	Hour          string  `json:"hour"`
+	IsGreen       bool    `json:"isGreen"`
+	EarnedCoins   int32   `json:"earnedCoins"`
+	SavedCo2      float64 `json:"savedCo2"`
+	Status        string  `json:"status"`
+	ConfirmedAt   *string `json:"confirmedAt,omitempty"`
+	StartedAt     *string `json:"startedAt,omitempty"`
+	CompletedAt   *string `json:"completedAt,omitempty"`
+	CheckedInAt   *string `json:"checkedInAt,omitempty"`
+	CheckInMethod *string `json:"checkInMethod,omitempty"`
+	NoShowAt      *string `json:"noShowAt,omitempty"`
 }
 
 // CompleteResponse is the response for the complete endpoint.

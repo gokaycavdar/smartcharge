@@ -3,7 +3,8 @@
 import React from 'react';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Zap, Megaphone, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Zap, Megaphone, Settings, LogOut, Store, TicketPercent } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function OperatorLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -54,6 +55,28 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
             <span className="hidden lg:block">İstasyonlar</span>
           </Link>
           <Link 
+            href="/operator/store" 
+            className={`group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 font-medium ${
+              pathname === "/operator/store" 
+                ? "bg-accent-primary/10 text-accent-primary shadow-sm ring-1 ring-accent-primary/20" 
+                : "text-text-secondary hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <Store size={20} className={pathname === "/operator/store" ? "text-accent-primary" : "group-hover:text-accent-primary transition-colors"} /> 
+            <span className="hidden lg:block">Magaza</span>
+          </Link>
+          <Link 
+            href="/operator/coupons" 
+            className={`group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 font-medium ${
+              pathname === "/operator/coupons" 
+                ? "bg-accent-primary/10 text-accent-primary shadow-sm ring-1 ring-accent-primary/20" 
+                : "text-text-secondary hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <TicketPercent size={20} className={pathname === "/operator/coupons" ? "text-accent-primary" : "group-hover:text-accent-primary transition-colors"} /> 
+            <span className="hidden lg:block">Kuponlar</span>
+          </Link>
+          <Link 
             href="/operator/settings" 
             className={`group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 font-medium ${
               pathname === "/operator/settings" 
@@ -67,6 +90,9 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
         </nav>
 
         <div className="mt-auto pt-4 border-t border-white/5">
+            <div className="mb-2">
+              <ThemeToggle />
+            </div>
             <Link href="/" className="group flex items-center gap-3 p-3 hover:bg-red-500/10 text-text-secondary hover:text-red-400 rounded-xl transition-all font-medium">
             <LogOut size={20} className="group-hover:text-red-400 transition-colors" /> <span className="hidden lg:block">Çıkış</span>
             </Link>

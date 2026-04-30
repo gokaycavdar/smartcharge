@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -22,6 +23,10 @@ func NewService(queries *generated.Queries) *Service {
 
 // GetProfile returns a user's full profile with badges, stations, and recent reservations.
 func (s *Service) GetProfile(ctx context.Context, userID int32) (*ProfileResponse, error) {
+	if err := s.queries.MarkUserPendingReservationsNoShow(ctx, userID); err != nil {
+		log.Printf("user profile: failed to mark no-shows for user %d: %v", userID, err)
+	}
+
 	user, err := s.queries.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundError("User")
@@ -120,6 +125,18 @@ func (s *Service) GetProfile(ctx context.Context, userID int32) (*ProfileRespons
 		if r.CompletedAt.Valid {
 			s := r.CompletedAt.Time.UTC().Format(time.RFC3339)
 			item.CompletedAt = &s
+		}
+		if r.CheckedInAt.Valid {
+			s := r.CheckedInAt.Time.UTC().Format(time.RFC3339)
+			item.CheckedInAt = &s
+		}
+		if r.CheckInMethod.Valid {
+			s := r.CheckInMethod.String
+			item.CheckInMethod = &s
+		}
+		if r.NoShowAt.Valid {
+			s := r.NoShowAt.Time.UTC().Format(time.RFC3339)
+			item.NoShowAt = &s
 		}
 
 		reservationItems[i] = item

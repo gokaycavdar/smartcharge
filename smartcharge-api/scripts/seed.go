@@ -259,9 +259,22 @@ var stationSeeds = []stationSeed{
 	{"Manisa Kent Park", 38.612, 27.415, 7.2, "Kent Park, Manisa", 75, "central"},
 	{"Manisa Ulupark", 38.614, 27.428, 7.0, "Ulupark, Manisa", 85, "central"},
 	{"Manisa Fatih Parkı", 38.610, 27.430, 6.8, "Fatih Parkı, Manisa", 50, "suburban"},
-	// İzmir & Çevre (Reference points)
-	{"İzmir Bornova DC", 38.460, 27.220, 9.0, "Bornova Merkez, İzmir", 95, "central"},
-	{"Alsancak Liman", 38.435, 27.150, 10.0, "Alsancak Liman Cad., İzmir", 80, "central"},
+	// İzmir & Çevre
+	{"İzmir Bornova DC", 38.462, 27.217, 9.0, "Bornova Merkez, İzmir", 95, "central"},
+	{"İzmir Forum Bornova", 38.458, 27.213, 8.8, "Kazımdirik, Forum Bornova AVM, Bornova/İzmir", 88, "central"},
+	{"İzmir Bayraklı Şehir Hastanesi", 38.486, 27.177, 8.7, "Şehir Hastanesi, Bayraklı/İzmir", 90, "central"},
+	{"Alsancak Liman", 38.435, 27.150, 10.0, "Alsancak Liman Cad., Konak/İzmir", 82, "central"},
+	{"İzmir Konak Meydan", 38.418, 27.128, 9.6, "Konak Meydanı, Konak/İzmir", 84, "central"},
+	{"İzmir Karşıyaka İskele", 38.461, 27.112, 9.2, "Karşıyaka İskele, Karşıyaka/İzmir", 76, "suburban"},
+	{"İzmir Gaziemir Optimum", 38.319, 27.157, 8.9, "Optimum AVM, Gaziemir/İzmir", 79, "suburban"},
+	{"İzmir Adnan Menderes Havalimanı", 38.291, 27.156, 10.5, "ADN Dış Hatlar Otoparkı, Gaziemir/İzmir", 86, "central"},
+	{"İzmir Balçova İstinyePark", 38.392, 27.044, 9.4, "İstinyePark AVM, Balçova/İzmir", 72, "suburban"},
+	{"İzmir Narlıdere Sahil", 38.389, 27.010, 8.6, "Narlıdere Sahil Yolu, Narlıdere/İzmir", 55, "outskirt"},
+	{"İzmir Buca Hasanağa Bahçesi", 38.381, 27.169, 8.4, "Hasanağa Bahçesi, Buca/İzmir", 68, "suburban"},
+	{"VARR - Buca DC Kuruçeşme", 38.370412, 27.195594, 9.1, "VARR - Buca DC Kuruçeşme, 205/12. Sk. No:5, 35390 Buca/İzmir, Türkiye", 81, "central"},
+	{"İzmir Çiğli Atatürk OSB", 38.514, 27.047, 8.7, "Atatürk Organize Sanayi Bölgesi, Çiğli/İzmir", 74, "suburban"},
+	{"İzmir Menemen Ulukent", 38.609, 27.071, 8.2, "Ulukent, Menemen/İzmir", 52, "outskirt"},
+	{"İzmir Seferihisar Merkez", 38.195, 26.838, 8.0, "Seferihisar Merkez, İzmir", 34, "outskirt"},
 }
 
 // Badge seed data
@@ -304,6 +317,24 @@ type campaignSeed struct {
 	badgeIndex  int // index into badgeSeeds/badgeIDs
 }
 
+// Store seed data
+type storeItemSeed struct {
+	name           string
+	description    string
+	smartcoinPrice int32
+	stockQuantity  int32
+	icon           string
+	isActive       bool
+}
+
+var storeItemSeeds = []storeItemSeed{
+	{"Bedava Otopark (1 Saat)", "Anlasmali otoparklarda 1 saat ucretsiz park hakki.", 250, 300, "P", true},
+	{"Kahve Kuponu", "Anlasmali kafelerde gecerli 1 adet kahve kuponu.", 180, 500, "C", true},
+	{"Arac Yikama Paketi", "Anlasmali noktalarda dis yikama kuponu.", 420, 200, "W", true},
+	{"Premium Destek (7 Gun)", "Oncelikli destek ve hizli islem sirasi.", 700, 100, "+", true},
+	{"Hizli Sarj Kredisi", "Bir sonraki seansinizda ek hizli sarj avantaji.", 950, 150, "E", true},
+}
+
 var campaignSeeds = []campaignSeed{
 	{
 		title:       "Gece Kuşu Özel - %20 İndirim",
@@ -343,6 +374,25 @@ var campaignSeeds = []campaignSeed{
 	},
 }
 
+// Coupon catalog seed data
+type couponCatalogSeed struct {
+	name          string
+	description   string
+	coinCost      int32
+	discountType  string
+	discountValue float64
+	icon          string
+	active        bool
+}
+
+var couponCatalogSeeds = []couponCatalogSeed{
+	{"%10 Indirim", "Sarj isleminde %10 indirim", 500, "percentage", 10, "🎟️", true},
+	{"%20 Indirim", "Sarj isleminde %20 indirim", 1000, "percentage", 20, "✨", true},
+	{"50 TL Indirim", "Sarj isleminde sabit 50 TL indirim", 800, "fixed", 50, "💳", true},
+	{"100 TL Indirim", "Sarj isleminde sabit 100 TL indirim", 1500, "fixed", 100, "💰", true},
+	{"200 TL Indirim", "Sarj isleminde sabit 200 TL indirim", 2500, "fixed", 200, "🏆", true},
+}
+
 func main() {
 	_ = godotenv.Load()
 
@@ -366,6 +416,10 @@ func main() {
 	// 1. Clean existing data (order matters: children first)
 	fmt.Println("Cleaning existing data...")
 	pool.Exec(ctx, "DELETE FROM station_density_forecasts")
+	pool.Exec(ctx, "DELETE FROM user_coupons")
+	pool.Exec(ctx, "DELETE FROM coupon_catalog")
+	pool.Exec(ctx, "DELETE FROM purchase_history")
+	pool.Exec(ctx, "DELETE FROM store_items")
 	pool.Exec(ctx, "DELETE FROM campaign_target_badges")
 	pool.Exec(ctx, "DELETE FROM campaigns")
 	pool.Exec(ctx, "DELETE FROM reservations")
@@ -605,5 +659,32 @@ func main() {
 	}
 
 	fmt.Println("Badge-targeted campaigns created.")
+
+	// 8. Create coupon catalog
+	fmt.Println("Creating coupon catalog...")
+	for _, cs := range couponCatalogSeeds {
+		_, err := pool.Exec(ctx, `
+			INSERT INTO coupon_catalog (name, description, coin_cost, discount_type, discount_value, icon, active)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`, cs.name, cs.description, cs.coinCost, cs.discountType, cs.discountValue, cs.icon, cs.active)
+		if err != nil {
+			log.Fatalf("Failed to create coupon catalog item %q: %v", cs.name, err)
+		}
+	}
+	fmt.Printf("  %d coupon catalog items created.\n", len(couponCatalogSeeds))
+
+	// 9. Create store items
+	fmt.Println("Creating store items...")
+	for _, ss := range storeItemSeeds {
+		_, err := pool.Exec(ctx, `
+			INSERT INTO store_items (name, description, smartcoin_price, stock_quantity, icon, is_active)
+			VALUES ($1, $2, $3, $4, $5, $6)
+		`, ss.name, ss.description, ss.smartcoinPrice, ss.stockQuantity, ss.icon, ss.isActive)
+		if err != nil {
+			log.Fatalf("Failed to create store item %q: %v", ss.name, err)
+		}
+	}
+	fmt.Printf("  %d store items created.\n", len(storeItemSeeds))
+
 	fmt.Println("Seed completed successfully! Database is ready.")
 }

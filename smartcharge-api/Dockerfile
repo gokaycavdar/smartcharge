@@ -1,7 +1,7 @@
 # -- Stage 1: Build ----
 FROM golang:1.25-alpine AS builder
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git curl
 
 WORKDIR /app
 
@@ -11,6 +11,12 @@ RUN go mod download
 
 # Copy source
 COPY . .
+
+# Install sqlc for code generation
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
+
+# Generate SQLC code from queries
+RUN /go/bin/sqlc generate -f db/sqlc.yaml
 
 # Build static binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/server
@@ -30,6 +36,9 @@ COPY --from=builder /server /app/server
 
 # Copy migrations (needed for golang-migrate at startup)
 COPY --from=builder /app/db/migrations /app/db/migrations
+
+# Copy generated SQLC code
+COPY --from=builder /app/db/generated /app/db/generated
 
 # Ensure non-root user owns the app directory
 RUN chown -R appuser:appgroup /app

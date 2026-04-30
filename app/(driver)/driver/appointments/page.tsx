@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft, BatteryCharging, Calendar, Clock, Leaf, Loader2,
   Zap, CheckCircle2, X, ShieldCheck, PlayCircle, AlertTriangle,
-  Star, MessageSquare, Send
+  Star, MessageSquare, Send, MapPin, QrCode, Camera
 } from "lucide-react";
 import Link from "next/link";
-import { Card } from "@/components/ui/Card";
-import { authFetch, unwrapResponse, getStoredUserId } from "@/lib/auth";
+import { authFetch, unwrapResponse, getStoredUserId, getToken } from "@/lib/auth";
 
 type Reservation = {
   id: number;
@@ -20,6 +20,9 @@ type Reservation = {
   confirmedAt?: string;
   startedAt?: string;
   completedAt?: string;
+  checkedInAt?: string;
+  checkInMethod?: "GEOLOCATION" | "QR";
+  noShowAt?: string;
   station: {
     id: number;
     name: string;
@@ -63,9 +66,45 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
     color: "red",
     icon: <AlertTriangle className="h-3 w-3" />,
   },
+  NO_SHOW: {
+    label: "Gelmedi",
+    color: "rose",
+    icon: <AlertTriangle className="h-3 w-3" />,
+  },
 };
 
+const CHECKIN_WINDOW_BEFORE_MINUTES = 15;
+const CHECKIN_WINDOW_AFTER_MINUTES = 10;
+
+function getReservationStart(reservation: Reservation): Date {
+  const date = new Date(reservation.date);
+  const hourNum = Number.parseInt(reservation.hour.split(":")[0] ?? "0", 10);
+  const start = new Date(date);
+  start.setHours(hourNum, 0, 0, 0);
+  return start;
+}
+
+function getCheckInWindow(reservation: Reservation) {
+  const start = getReservationStart(reservation);
+  const windowStart = new Date(start.getTime() - CHECKIN_WINDOW_BEFORE_MINUTES * 60 * 1000);
+  const windowEnd = new Date(start.getTime() + CHECKIN_WINDOW_AFTER_MINUTES * 60 * 1000);
+  return { windowStart, windowEnd };
+}
+
+function getCheckInState(reservation: Reservation) {
+  const now = new Date();
+  const { windowStart, windowEnd } = getCheckInWindow(reservation);
+  return {
+    canCheckIn: now >= windowStart && now <= windowEnd,
+    tooEarly: now < windowStart,
+    tooLate: now > windowEnd,
+    windowStart,
+    windowEnd,
+  };
+}
+
 export default function AppointmentsPage() {
+  const router = useRouter();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +118,7 @@ export default function AppointmentsPage() {
   );
   const completedReservations = reservations.filter((r) => r.status === "COMPLETED");
   const terminalReservations = reservations.filter(
-    (r) => r.status === "CANCELLED" || r.status === "FAILED"
+    (r) => r.status === "CANCELLED" || r.status === "FAILED" || r.status === "NO_SHOW"
   );
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
@@ -88,8 +127,17 @@ export default function AppointmentsPage() {
   };
 
   const loadReservations = useCallback(async () => {
+    const token = getToken();
     const userId = getStoredUserId();
-    if (!userId) return;
+    if (!token) {
+      router.push("/");
+      return;
+    }
+    if (!userId) {
+      setError("Kullanici oturumu bulunamadi. Lutfen tekrar giris yapin.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await authFetch(`/api/users/${userId}`);
@@ -104,17 +152,16 @@ export default function AppointmentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
-    const userId = getStoredUserId();
-    if (!userId) {
-      setError("Önce giriş yapmalısınız.");
-      setIsLoading(false);
+    const token = getToken();
+    if (!token) {
+      router.push("/");
       return;
     }
     loadReservations();
-  }, [loadReservations]);
+  }, [loadReservations, router]);
 
   const handleConfirm = async (id: number) => {
     setActionLoading(id);
@@ -132,6 +179,24 @@ export default function AppointmentsPage() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleCheckInSuccess = (updatedReservation: Reservation) => {
+    setReservations((prev) =>
+      prev.map((r) =>
+        r.id === updatedReservation.id
+          ? {
+              ...r,
+              status: updatedReservation.status,
+              confirmedAt: updatedReservation.confirmedAt,
+              checkedInAt: updatedReservation.checkedInAt,
+              checkInMethod: updatedReservation.checkInMethod,
+              noShowAt: updatedReservation.noShowAt,
+            }
+          : r
+      )
+    );
+    showToast("Check-in doğrulaması başarılı!", "success");
   };
 
   const handleStartCharging = async (id: number) => {
@@ -311,6 +376,7 @@ export default function AppointmentsPage() {
                       onStartCharging={handleStartCharging}
                       onResumeCharging={handleResumeCharging}
                       onCancel={handleCancel}
+                      onCheckInSuccess={handleCheckInSuccess}
                     />
                   ))}
                 </div>
@@ -468,6 +534,7 @@ function StatusBadge({ status }: { status: string }) {
     green: "bg-green-500/10 text-green-400 border-green-500/20",
     slate: "bg-slate-500/10 text-slate-400 border-slate-500/20",
     red: "bg-red-500/10 text-red-400 border-red-500/20",
+    rose: "bg-rose-500/10 text-rose-400 border-rose-500/20",
   };
   const classes = colorMap[config.color] || colorMap.slate;
 
@@ -590,6 +657,7 @@ function ActiveReservationCard({
   onStartCharging,
   onResumeCharging,
   onCancel,
+  onCheckInSuccess,
 }: {
   reservation: Reservation;
   actionLoading: number | null;
@@ -597,6 +665,7 @@ function ActiveReservationCard({
   onStartCharging: (id: number) => void;
   onResumeCharging: (id: number) => void;
   onCancel: (id: number) => void;
+  onCheckInSuccess: (updatedReservation: Reservation) => void;
 }) {
   const isThisLoading = actionLoading === res.id;
 
@@ -613,6 +682,7 @@ function ActiveReservationCard({
   ];
 
   const currentStepIdx = steps.findIndex((s) => s.key === res.status);
+  const checkInState = getCheckInState(res);
 
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-accent-primary/30 bg-surface-1 p-6 shadow-lg shadow-accent-primary/10 ring-1 ring-accent-primary/20 transition-all hover:shadow-accent-primary/20">
@@ -660,6 +730,21 @@ function ActiveReservationCard({
                   Eco Slot
                 </div>
               )}
+
+              {res.status === "PENDING" && (
+                <div className="mt-3 text-xs text-text-tertiary">
+                  Check-in aralığı: {checkInState.windowStart.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                  {" - "}
+                  {checkInState.windowEnd.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                </div>
+              )}
+
+              {res.checkedInAt && (
+                <div className="mt-2 text-xs text-emerald-300">
+                  Check-in: {new Date(res.checkedInAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                  {res.checkInMethod ? ` (${res.checkInMethod === "QR" ? "QR" : "Konum"})` : ""}
+                </div>
+              )}
             </div>
           </div>
 
@@ -678,18 +763,37 @@ function ActiveReservationCard({
 
             {/* PENDING -> Confirm */}
             {res.status === "PENDING" && (
-              <button
-                onClick={() => onConfirm(res.id)}
-                disabled={isThisLoading}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-sm font-bold transition shadow-lg shadow-blue-500/25 active:scale-95 disabled:opacity-50"
-              >
-                {isThisLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ShieldCheck className="h-4 w-4" />
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  onClick={() => onConfirm(res.id)}
+                  disabled={isThisLoading}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-sm font-bold transition shadow-lg shadow-blue-500/25 active:scale-95 disabled:opacity-50"
+                >
+                  {isThisLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="h-4 w-4" />
+                  )}
+                  Manuel Onay
+                </button>
+
+                <CheckInPanel
+                  reservation={res}
+                  disabled={isThisLoading}
+                  onSuccess={onCheckInSuccess}
+                />
+
+                {checkInState.tooEarly && (
+                  <p className="text-xs text-amber-300">
+                    Check-in henüz aktif değil.
+                  </p>
                 )}
-                Onayla
-              </button>
+                {checkInState.tooLate && (
+                  <p className="text-xs text-rose-300">
+                    Check-in penceresi kapandı.
+                  </p>
+                )}
+              </div>
             )}
 
             {/* CONFIRMED -> Start Charging */}
@@ -747,6 +851,141 @@ function ActiveReservationCard({
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CheckInPanel({
+  reservation,
+  disabled,
+  onSuccess,
+}: {
+  reservation: Reservation;
+  disabled: boolean;
+  onSuccess: (updatedReservation: Reservation) => void;
+}) {
+  const [loading, setLoading] = useState<"geo" | "qr" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [qrPayload, setQrPayload] = useState("");
+
+  const checkInState = getCheckInState(reservation);
+  const isDisabled = disabled || !checkInState.canCheckIn;
+
+  const submitCheckIn = async (body: Record<string, unknown>) => {
+    const res = await authFetch(`/api/reservations/${reservation.id}/check-in`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    const data = await unwrapResponse<Reservation>(res);
+    onSuccess(data);
+  };
+
+  const handleGeoCheckIn = async () => {
+    setError(null);
+    if (!navigator.geolocation) {
+      setError("Konum servisleri cihazınızda desteklenmiyor.");
+      return;
+    }
+
+    setLoading("geo");
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 12000,
+          maximumAge: 0,
+        });
+      });
+
+      await submitCheckIn({
+        method: "GEOLOCATION",
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
+    } catch (err) {
+      const geoErr = err as { code?: number };
+      if (typeof geoErr?.code === "number") {
+        if (geoErr.code === 1) {
+          setError("Konum izni reddedildi.");
+        } else if (geoErr.code === 3) {
+          setError("Konum alınamadı (zaman aşımı).");
+        } else {
+          setError("Konum servisleri kapalı veya erişilemiyor.");
+        }
+      } else {
+        setError(err instanceof Error ? err.message : "Konum ile check-in başarısız.");
+      }
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleQRCheckIn = async () => {
+    setError(null);
+    if (!qrPayload.trim()) {
+      setError("QR payload boş olamaz.");
+      return;
+    }
+
+    setLoading("qr");
+    try {
+      if (navigator?.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach((track) => track.stop());
+      } else {
+        setError("Kamera erişimi bu cihazda desteklenmiyor.");
+        setLoading(null);
+        return;
+      }
+
+      await submitCheckIn({ method: "QR", qrPayload: qrPayload.trim() });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "QR check-in başarısız.";
+      if (msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("denied")) {
+        setError("Kamera izni reddedildi.");
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  return (
+    <div className="w-full rounded-xl border border-white/10 bg-surface-2 p-3">
+      <p className="mb-2 text-xs font-semibold text-white/90">Check-in Doğrulama</p>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={handleGeoCheckIn}
+          disabled={isDisabled || loading !== null}
+          className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/20 disabled:opacity-50"
+        >
+          {loading === "geo" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
+          Konum ile
+        </button>
+
+        <button
+          onClick={handleQRCheckIn}
+          disabled={isDisabled || loading !== null}
+          className="inline-flex items-center gap-2 rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-300 transition hover:bg-blue-500/20 disabled:opacity-50"
+        >
+          {loading === "qr" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+          QR ile
+        </button>
+      </div>
+
+      <div className="mt-2 flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-2 py-1.5">
+        <QrCode className="h-3.5 w-3.5 text-text-tertiary" />
+        <input
+          value={qrPayload}
+          onChange={(e) => setQrPayload(e.target.value)}
+          placeholder="SCCHK:stationId:timestamp:signature"
+          className="w-full bg-transparent text-xs text-white placeholder:text-text-tertiary focus:outline-none"
+        />
+      </div>
+
+      {error && <p className="mt-2 text-xs text-rose-300">{error}</p>}
     </div>
   );
 }
