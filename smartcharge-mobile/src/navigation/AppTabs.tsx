@@ -2,7 +2,8 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
+import StoreScreen from "../screens/StoreScreen";
+import CouponCenterScreen from "../screens/CouponCenterScreen";
 import StationsScreen from "../screens/StationsScreen";
 import ReservationsScreen from "../screens/ReservationsScreen";
 import WalletScreen from "../screens/wallet/WalletScreen";
@@ -44,13 +45,27 @@ export default function AppTabs() {
           const s = focused ? size + 2 : size;
           if (route.name === "Stations") return <Ionicons name="map" size={s} color={color} />;
           if (route.name === "Reservations") return <Ionicons name="calendar" size={s} color={color} />;
-          return <Ionicons name="wallet" size={s} color={color} />;
+          if (route.name === "Wallet") return <Ionicons name="wallet" size={s} color={color} />;
+          if (route.name === "Store") return <Ionicons name="storefront" size={s} color={color} />;
+          if (route.name === "Coupons") return <Ionicons name="gift" size={s} color={color} />;
+          return <Ionicons name="ellipse" size={s} color={color} />;
         },
       })}
     >
       <Tab.Screen name="Stations" component={StationsStack} options={{ headerShown: false, title: "Harita" }} />
       <Tab.Screen name="Reservations" component={ReservationsScreen} options={{ headerShown: false, title: "Randevular" }} />
       <Tab.Screen name="Wallet" component={WalletScreen} options={{ headerShown: false, title: "Cüzdanım" }} />
+      <Tab.Screen
+        name="Store"
+        component={StoreScreen}
+        options={{ headerShown: false, title: "Mağaza" }}
+      />
+
+      <Tab.Screen
+        name="Coupons"
+        component={CouponCenterScreen}
+        options={{ headerShown: false, title: "Kupon" }}
+      />
     </Tab.Navigator>
   );
 }
