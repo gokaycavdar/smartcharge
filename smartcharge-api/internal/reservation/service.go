@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -106,8 +107,14 @@ func isTerminalStatus(status string) bool {
 // Service handles reservation business logic.
 type Service struct {
 	queries        *generated.Queries
-	pool           *pgxpool.Pool
+	pool           reservationPool
 	badgeEvaluator *badge.Evaluator
+}
+
+type reservationPool interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
 }
 
 // NewService creates a new reservation service.
